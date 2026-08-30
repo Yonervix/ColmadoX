@@ -9,6 +9,7 @@ import {
   type VentaRegistrada,
 } from './venta.service';
 import type { TipoProducto } from '../inventario/inventario.types';
+import { AuthService } from '../../core/services/auth.service';
 
 interface Linea {
   producto: ProductoVenta;
@@ -23,6 +24,7 @@ interface Linea {
 export class VentasComponent implements OnInit {
   private servicio = inject(VentaService);
   private router = inject(Router);
+  protected auth = inject(AuthService);
 
   protected readonly productos = signal<ProductoVenta[]>([]);
   protected readonly clientes = signal<Cliente[]>([]);

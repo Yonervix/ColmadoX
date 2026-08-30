@@ -1,0 +1,256 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Gastos</h1>
+    <p class="text-sm text-slate-500">Registro de gastos y presupuesto mensual.</p>
+  </div>
+
+  <div class="flex gap-2">
+    <button
+      (click)="tab.set('gastos')"
+      [class]="tab() === 'gastos' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'"
+      class="rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition"
+    >
+      Gastos
+    </button>
+    <button
+      (click)="tab.set('presupuesto')"
+      [class]="tab() === 'presupuesto' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'"
+      class="rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition"
+    >
+      Presupuesto
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+  }
+
+  @if (tab() === 'gastos') {
+    @if (sinCaja()) {
+      <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <b>No hay una caja abierta hoy.</b> El gasto se registrará de todos modos, pero no aparecerá en el arqueo de una caja.
+      </div>
+    }
+
+    <div class="rounded-xl bg-white p-5 shadow-sm">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-[1fr_180px_200px_auto]">
+        <div>
+          <label class="block text-sm font-medium text-slate-700" for="gDesc">Descripción</label>
+          <input
+            id="gDesc"
+            type="text"
+            [(ngModel)]="descripcion"
+            name="gDesc"
+            placeholder="Ej. Cambio de bombillo"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700" for="gCat">Categoría</label>
+          <input
+            id="gCat"
+            type="text"
+            list="categorias"
+            [(ngModel)]="categoria"
+            name="gCat"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          />
+          <datalist id="categorias">
+            @for (c of sugeridas; track c) {
+              <option [value]="c"></option>
+            }
+          </datalist>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700" for="gMonto">Monto ($)</label>
+          <input
+            id="gMonto"
+            type="number"
+            [(ngModel)]="monto"
+            name="gMonto"
+            min="0.01"
+            step="0.01"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          />
+        </div>
+        <div class="flex items-end">
+          <button
+            (click)="registrar()"
+            class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 md:w-auto"
+          >
+            Registrar gasto
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      @for (p of ['hoy', '7d', '30d', 'mes', 'año']; track p) {
+        <button
+          (click)="cambiarPeriodo(p)"
+          [class]="periodo() === p ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'"
+          class="rounded-lg px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+        >
+          {{ p === 'hoy' ? 'Hoy' : p === '7d' ? '7 días' : p === '30d' ? '30 días' : p === 'mes' ? 'Este mes' : 'Este año' }}
+        </button>
+      }
+      <p class="text-sm text-slate-500">Total: <b>${{ totalGastado() | number: '1.2-2' }}</b></p>
+    </div>
+
+    <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+      @if (cargando()) {
+        <p class="p-6 text-sm text-slate-500">Cargando gastos…</p>
+      } @else if (gastos().length === 0) {
+        <p class="p-6 text-sm text-slate-500">No hay gastos en este período.</p>
+      } @else {
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-slate-200 text-xs uppercase text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Fecha</th>
+              <th class="px-4 py-3">Descripción</th>
+              <th class="px-4 py-3">Categoría</th>
+              <th class="px-4 py-3 text-right">Monto</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (g of gastos(); track g.id) {
+              <tr>
+                <td class="px-4 py-3 text-slate-500">{{ g.fecha | date: 'dd/MM/yyyy hh:mm a' }}</td>
+                <td class="px-4 py-3 font-medium">{{ g.descripcion }}</td>
+                <td class="px-4 py-3">
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                    {{ g.categoria }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right font-semibold text-red-600">−${{ g.monto | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+
+  @if (tab() === 'presupuesto') {
+    <div class="flex items-center gap-3">
+      <input
+        type="month"
+        [value]="mes()"
+        (input)="ponerMes($any($event.target).value)"
+        class="rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+      />
+      <p class="text-sm text-slate-500">Presupuesto por categoría para el mes seleccionado.</p>
+    </div>
+
+    @let p = presupuesto();
+    @if (p) {
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="rounded-xl bg-white p-5 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Presupuesto total</p>
+          <p class="text-3xl font-bold text-slate-800">${{ p.total_presupuesto | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-5 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Gastado</p>
+          <p class="text-3xl font-bold text-red-600">${{ p.total_gastado | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-5 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Disponible</p>
+          <p class="text-3xl font-bold" [class]="(diferencias() ?? 0) < 0 ? 'text-red-600' : 'text-emerald-600'">
+            ${{ diferencias() ?? 0 | number: '1.2-2' }}
+          </p>
+        </div>
+      </div>
+
+      <div class="overflow-hidden rounded-xl bg-white shadow-sm">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-slate-200 text-xs uppercase text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Categoría</th>
+              <th class="px-4 py-3 text-right">Gastado</th>
+              <th class="px-4 py-3">Presupuesto ($)</th>
+              <th class="px-4 py-3 text-right">Diferencia</th>
+              <th class="px-4 py-3 text-right">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (f of p.filas; track f.categoria) {
+              <tr>
+                <td class="px-4 py-3 font-medium capitalize">{{ f.categoria }}</td>
+                <td class="px-4 py-3 text-right {{ (f.gastado > 0) ? 'text-red-600' : 'text-slate-500' }}">
+                  ${{ f.gastado | number: '1.2-2' }}
+                </td>
+                <td class="px-4 py-3">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [value]="ediciones()[f.categoria]"
+                    (input)="setEdicion(f.categoria, $any($event.target).value)"
+                    class="w-32 rounded-lg border border-slate-300 px-2 py-1 focus:border-emerald-500 focus:outline-none"
+                  />
+                </td>
+                <td class="px-4 py-3 text-right font-semibold"
+                    [class]="(f.presupuesto - f.gastado) < 0 ? 'text-red-600' : 'text-slate-700'">
+                  ${{ f.presupuesto - f.gastado | number: '1.2-2' }}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  @if (f.presupuesto > 0 && f.gastado > f.presupuesto) {
+                    <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Superado</span>
+                  } @else if (f.presupuesto > 0) {
+                    <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">OK</span>
+                  }
+                  <button
+                    (click)="guardarFila(f.categoria)"
+                    [disabled]="guardandoPres()"
+                    class="ml-2 rounded-lg bg-slate-800 px-3 py-1 text-xs font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+                  >
+                    Guardar
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="p-6 text-center text-sm text-slate-500">
+                  Sin categorías este mes. Añade una abajo.
+                </td>
+              </tr>
+            }
+            <tr class="bg-slate-50">
+              <td class="px-4 py-3">
+                <input
+                  type="text"
+                  [(ngModel)]="nuevaCat"
+                  name="nuevaCat"
+                  placeholder="Nueva categoría"
+                  class="w-full rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none"
+                />
+              </td>
+              <td></td>
+              <td class="px-4 py-3">
+                <input
+                  type="number"
+                  [(ngModel)]="nuevoMonto"
+                  name="nuevoMonto"
+                  min="0"
+                  step="0.01"
+                  placeholder="Monto"
+                  class="w-32 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none"
+                />
+              </td>
+              <td></td>
+              <td class="px-4 py-3 text-right">
+                <button
+                  (click)="agregarCategoria()"
+                  [disabled]="guardandoPres()"
+                  class="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  Añadir
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

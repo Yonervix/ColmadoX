@@ -20,7 +20,7 @@
       @if (r?.caja?.estado === 'cerrada') {
         <div
           class="rounded-xl border p-4 text-sm"
-          [class]="r!.caja.diferencia === 0
+          [class]="r!.caja!.diferencia === 0
             ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
             : 'border-amber-200 bg-amber-50 text-amber-800'"
         >
@@ -30,7 +30,10 @@
           <p class="mt-1">
             Debe haber ${{ r!.caja!.esperado | number: '1.2-2' }} · Contaste ${{
               r!.caja!.dinero_fisico | number: '1.2-2'
-            }} · Ganancia ${{ r!.caja!.ganancia | number: '1.2-2' }}
+            }}
+            @if (auth.isJefe()) {
+              · Ganancia ${{ r!.caja!.ganancia | number: '1.2-2' }}
+            }
           </p>
           <p class="mt-1 text-xs text-slate-500">
             Cerrada {{ r!.caja!.cerrada_at | date: 'dd/MM/yyyy hh:mm a' }} · sus ventas quedaron en su historial
@@ -84,10 +87,12 @@
           <p class="text-xs uppercase text-slate-500">Debe haber en físico</p>
           <p class="text-lg font-bold">${{ r!.esperado | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
-          <p class="text-xs uppercase text-slate-500">Ganancia total</p>
-          <p class="text-lg font-bold text-indigo-600">${{ r!.ganancia | number: '1.2-2' }}</p>
-        </div>
+        @if (auth.isJefe()) {
+          <div class="rounded-xl bg-white p-4 shadow-sm">
+            <p class="text-xs uppercase text-slate-500">Ganancia total</p>
+            <p class="text-lg font-bold text-indigo-600">${{ r!.ganancia | number: '1.2-2' }}</p>
+          </div>
+        }
       </div>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -149,15 +154,19 @@
                   </p>
                 </div>
                 <div class="flex shrink-0 items-center gap-3">
-                  <span class="text-xs text-indigo-600">ganancia ${{ v.ganancia | number: '1.2-2' }}</span>
+                  @if (auth.isJefe()) {
+                    <span class="text-xs text-indigo-600">ganancia ${{ v.ganancia | number: '1.2-2' }}</span>
+                  }
                   <span class="font-semibold">${{ v.total | number: '1.2-2' }}</span>
-                  <button
-                    (click)="anular(v)"
-                    [disabled]="ocupado() || v.anulada"
-                    class="rounded-lg bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-200 disabled:opacity-40"
-                  >
-                    {{ v.anulada ? 'Anulada' : 'Anular' }}
-                  </button>
+                  @if (auth.isJefe()) {
+                    <button
+                      (click)="abrirModalAnular(v)"
+                      [disabled]="ocupado() || v.anulada"
+                      class="rounded-lg bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-200 disabled:opacity-40"
+                    >
+                      {{ v.anulada ? 'Anulada' : 'Anular' }}
+                    </button>
+                  }
                 </div>
               </li>
             } @empty {
@@ -169,11 +178,202 @@
         <div class="rounded-xl bg-white p-6 shadow-sm">
           <h2 class="mb-4 font-semibold">Cerrar caja</h2>
           <p class="mb-3 text-sm text-slate-600">
-            Cuenta el dinero físico y escribe el total. Debe haber <b>${{ r!.esperado | number: '1.2-2' }}</b>.
+            Al cerrar, la caja y sus ventas quedan guardadas como historial.
           </p>
-          <div class="flex items-center gap-2">
-            <span class="font-semibold text-slate-700">$</span>
+          <button
+            (click)="abrirModalCerrar()"
+            [disabled]="ocupado()"
+            class="w-full rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            Cerrar caja (arqueo)
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (auth.isJefe()) {
+      <div class="rounded-xl bg-white p-6 shadow-sm">
+        <h2 class="mb-4 font-semibold">Historial de cajas</h2>
+        @if (cajasCerradas().length === 0) {
+          <p class="text-sm text-slate-500">Aún no hay cajas cerradas.</p>
+        } @else {
+          <ul class="divide-y divide-slate-100">
+            @for (c of cajasCerradas(); track c.id) {
+            <li>
+              <button
+                (click)="verDetalle(c)"
+                class="flex w-full items-center justify-between gap-4 px-2 py-3 text-left transition hover:bg-slate-50"
+              >
+                <div class="min-w-0">
+                  <p class="font-medium">
+                    Caja del {{ c.fecha | date: 'dd/MM/yyyy' }}
+                    <span class="text-xs font-normal text-slate-500">abierta {{ c.abierta_at | date: 'hh:mm a' }}</span>
+                  </p>
+                  <p class="text-xs text-slate-500">Toca para ver sus ventas y gastos.</p>
+                </div>
+                <div class="flex shrink-0 items-center gap-3 text-right">
+                  <div class="text-sm">
+                    <p class="text-slate-500">Debe haber <b>${{ c.esperado ?? 0 | number: '1.2-2' }}</b></p>
+                    <p class="text-slate-500">
+                      Dif.
+                      <b
+                        [class]="(c.diferencia ?? 0) < 0 ? 'text-red-600' : (c.diferencia ?? 0) > 0 ? 'text-emerald-600' : 'text-slate-600'"
+                      >
+                        ${{ c.diferencia ?? 0 | number: '1.2-2' }}
+                      </b>
+                    </p>
+                    <p class="text-indigo-600">Ganancia <b>${{ c.ganancia ?? 0 | number: '1.2-2' }}</b></p>
+                  </div>
+                  <span class="text-xs text-slate-400">{{ seleccionada()?.id === c.id ? '▲' : '▼' }}</span>
+                </div>
+              </button>
+
+              @if (seleccionada()?.id === c.id) {
+                <div class="px-2 pb-3">
+                  @if (detalleCargando()) {
+                    <p class="text-sm text-slate-500">Cargando detalle…</p>
+                  } @else {
+                    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                      <div>
+                        <p class="mb-1 text-xs font-semibold uppercase text-slate-500">Ventas ({{ ventasSel().length }})</p>
+                        <ul class="max-h-64 divide-y divide-slate-100 overflow-y-auto text-sm">
+                          @for (v of ventasSel(); track v.id) {
+                            <li class="flex items-center justify-between py-1.5">
+                              <div class="min-w-0">
+                                <p class="truncate font-medium">
+                                  #{{ v.numero }} · {{ v.cliente ?? (v.tipo === 'fiado' ? 'Fiado' : 'Contado') }}
+                                </p>
+                                <p class="text-xs text-slate-500">
+                                  {{ v.created_at | date: 'hh:mm a' }}
+                                  @if (v.anulada) {
+                                    <span class="font-semibold text-red-500"> · anulada</span>
+                                  }
+                                </p>
+                              </div>
+                              <div class="shrink-0 text-right">
+                                <p class="text-xs text-indigo-600">ganancia ${{ v.ganancia | number: '1.2-2' }}</p>
+                                <p class="font-semibold">${{ v.total | number: '1.2-2' }}</p>
+                              </div>
+                            </li>
+                          } @empty {
+                            <li class="py-1.5 text-slate-500">Sin ventas.</li>
+                          }
+                        </ul>
+                        <p class="mt-1 text-sm text-slate-600">
+                          Total vendido: <b>${{ totalVentasSel() | number: '1.2-2' }}</b>
+                        </p>
+                      </div>
+                      <div>
+                        <p class="mb-1 text-xs font-semibold uppercase text-slate-500">Gastos ({{ gastosSel().length }})</p>
+                        <ul class="max-h-64 divide-y divide-slate-100 overflow-y-auto text-sm">
+                          @for (g of gastosSel(); track g.id) {
+                            <li class="flex justify-between py-1.5">
+                              <span>{{ g.descripcion }}</span>
+                              <span class="font-semibold text-red-600">${{ g.monto | number: '1.2-2' }}</span>
+                            </li>
+                          } @empty {
+                            <li class="py-1.5 text-slate-500">Sin gastos.</li>
+                          }
+                        </ul>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  }
+
+  @if (ventaAnular(); as venta) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="cerrarModalAnular()">
+      <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+        <h2 class="text-xl font-bold text-red-600">Anular venta #{{ venta.numero }}</h2>
+        <p class="mt-1 text-sm text-slate-600">
+          {{ venta.cliente ?? (venta.tipo === 'fiado' ? 'A fiado' : 'Contado') }} · Total
+          <b>${{ venta.total | number: '1.2-2' }}</b>
+        </p>
+        <p class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          El stock de los productos se devolverá y la venta saldrá del reporte. Solo se puede anular el mismo día.
+        </p>
+
+        @if (error()) {
+          <p class="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error() }}</p>
+        }
+
+        <div class="mt-5 flex gap-3">
+          <button
+            (click)="cerrarModalAnular()"
+            [disabled]="ocupado()"
+            class="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            (click)="confirmarAnulacion()"
+            [disabled]="ocupado()"
+            class="flex-1 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+          >
+            {{ ocupado() ? 'Anulando…' : 'Sí, anular' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (modalCerrar()) {
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      (click)="cerrarModal()"
+    >
+      <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+        <h2 class="text-xl font-bold">Cerrar caja</h2>
+        <p class="mt-1 text-sm text-slate-500">Revisa el arqueo antes de cerrar.</p>
+
+        @let lectura = resumen();
+        <dl class="mt-4 space-y-2 text-sm">
+          <div class="flex justify-between">
+            <dt class="text-slate-500">Fondo inicial</dt>
+            <dd class="font-medium">${{ lectura!.caja!.fondo_inicial | number: '1.2-2' }}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-slate-500">Ventas contado</dt>
+            <dd class="font-medium text-emerald-600">${{ lectura!.ventas_contado | number: '1.2-2' }}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-slate-500">Cobros fiado</dt>
+            <dd class="font-medium text-emerald-600">${{ lectura!.cobros_fiado | number: '1.2-2' }}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-slate-500">Gastos</dt>
+            <dd class="font-medium text-red-600">−${{ lectura!.gastos | number: '1.2-2' }}</dd>
+          </div>
+          <div class="flex justify-between border-t border-slate-200 pt-2">
+            <dt class="font-semibold text-slate-700">Debe haber en físico</dt>
+            <dd class="text-lg font-bold text-emerald-700">${{ lectura!.esperado | number: '1.2-2' }}</dd>
+          </div>
+          @if (auth.isJefe()) {
+            <div class="flex justify-between">
+              <dt class="text-slate-500">Ganancia total</dt>
+              <dd class="font-medium text-indigo-600">${{ lectura!.ganancia | number: '1.2-2' }}</dd>
+            </div>
+          }
+        </dl>
+
+        @if (error()) {
+          <p class="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error() }}</p>
+        }
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-slate-700" for="fisico">Dinero físico en la caja</label>
+          <div class="mt-1 flex items-center gap-2">
+            <span class="text-lg font-semibold text-slate-700">$</span>
             <input
+              id="fisico"
               type="number"
               [(ngModel)]="fisico"
               name="fisico"
@@ -181,19 +381,26 @@
               placeholder="0.00"
               class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
             />
-          </div>
+        </div>
+        </div>
+
+        <div class="mt-5 flex gap-3">
           <button
-            (click)="cerrar()"
+            (click)="cerrarModal()"
             [disabled]="ocupado()"
-            class="mt-4 w-full rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+            class="flex-1 rounded-lg bg-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-300 disabled:opacity-50"
           >
-            Cerrar caja (arqueo)
+            Cancelar
           </button>
-          <p class="mt-3 text-xs text-slate-500">
-            Al cerrar, la caja y sus ventas quedan guardadas como historial.
-          </p>
+          <button
+            (click)="confirmarCierre()"
+            [disabled]="ocupado()"
+            class="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {{ ocupado() ? 'Cerrando…' : 'Confirmar cierre' }}
+          </button>
         </div>
       </div>
-    }
+    </div>
   }
 </div>

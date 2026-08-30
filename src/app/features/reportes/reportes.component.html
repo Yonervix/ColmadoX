@@ -1,4 +1,170 @@
-<div class="rounded-xl bg-white p-10 text-center shadow-sm">
-  <h1 class="text-2xl font-bold">Reportes (Fase 7)</h1>
-  <p class="mt-2 text-slate-500">Gráficas de ganancia por día, semana, mes, 6 meses y año. Exportación CSV.</p>
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold">Reportes</h1>
+    <p class="text-sm text-slate-500">Ventas, ganancias y gastos por período. Exportable a CSV.</p>
+  </div>
+
+  <div class="inline-flex flex-wrap gap-1 rounded-xl bg-slate-200 p-1">
+    @for (p of periodos; track p.key) {
+      <button
+        (click)="cargar(p.key)"
+        [class]="periodo() === p.key ? 'bg-white font-semibold text-emerald-700 shadow-sm' : 'text-slate-600'"
+        class="rounded-lg px-4 py-2 text-sm transition"
+      >
+        {{ p.label }}
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="text-slate-500">Cargando reportes…</p>
+  } @else {
+    @let r = resumen();
+    @if (r) {
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Ventas</p>
+          <p class="text-lg font-bold">${{ r.ventas | number: '1.2-2' }}</p>
+          <p class="text-xs text-slate-500">{{ r.tickets }} tickets</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Ganancia de ventas</p>
+          <p class="text-lg font-bold text-emerald-600">${{ r.ganancia | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Gastos</p>
+          <p class="text-lg font-bold text-red-600">${{ r.gastos | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Costo de mermas</p>
+          <p class="text-lg font-bold text-red-600">${{ r.mermas_costo | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Cobros de fiado</p>
+          <p class="text-lg font-bold text-emerald-600">${{ r.cobros_fiado | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Ganancia neta*</p>
+          <p class="text-lg font-bold text-indigo-600">${{ r.ganancia - r.gastos - r.mermas_costo | number: '1.2-2' }}</p>
+          <p class="text-xs text-slate-400">ventas − gastos − mermas</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="rounded-xl bg-white p-6 shadow-sm lg:col-span-2">
+          <div class="mb-4 flex items-center justify-between">
+            <h2 class="font-semibold">Ventas por día</h2>
+            <span class="text-xs text-slate-500">{{ rangoLabel() }}</span>
+          </div>
+          @if (r.por_dia.length === 0) {
+            <p class="text-sm text-slate-500">Sin ventas en el período.</p>
+          } @else {
+            <div class="flex h-44 items-end gap-1">
+              @for (d of r.por_dia; track d.fecha) {
+                <div class="group relative flex-1" title="{{ d.fecha }} · ${{ d.total }}">
+                  <div
+                    class="w-full rounded-t bg-emerald-500 transition hover:bg-emerald-600"
+                    style="height: {{ altura(d) }}"
+                  ></div>
+                </div>
+              }
+            </div>
+            <div class="mt-2 flex gap-1">
+              @for (d of r.por_dia; track d.fecha) {
+                <div class="flex-1 text-center text-[10px] text-slate-400">
+                  {{ d.fecha.slice(8) }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+          <h2 class="mb-4 font-semibold">Más vendidos</h2>
+          @if (r.top.length === 0) {
+            <p class="text-sm text-slate-500">Sin datos.</p>
+          } @else {
+            <ul class="space-y-3 text-sm">
+              @for (p of r.top; track p.nombre; let i = $index) {
+                <li class="flex items-center gap-3">
+                  <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                    {{ i + 1 }}
+                  </span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate font-medium">{{ p.nombre }}</p>
+                    <p class="text-xs text-slate-500">{{ p.cantidad }} unidades</p>
+                  </div>
+                  <span class="font-semibold">${{ p.total | number: '1.2-2' }}</span>
+                </li>
+              }
+            </ul>
+          }
+          @if (r.por_tipo.length > 0) {
+            <div class="mt-6 border-t border-slate-100 pt-4">
+              <h3 class="mb-2 text-sm font-semibold text-slate-600">Por tipo</h3>
+              @for (t of r.por_tipo; track t.tipo) {
+                <div class="flex items-center justify-between py-1 text-sm">
+                  <span class="text-slate-600">{{ etiquetaTipo(t.tipo) }}</span>
+                  <span class="font-semibold">${{ t.total | number: '1.2-2' }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-white p-6 shadow-sm">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="font-semibold">Detalle de ventas ({{ ventas().length }})</h2>
+          <button
+            (click)="exportarCSV()"
+            [disabled]="exportando() || ventas().length === 0"
+            class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {{ exportando() ? 'Preparando…' : 'Exportar CSV' }}
+          </button>
+        </div>
+        <div class="max-h-96 overflow-auto">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th class="px-3 py-2">#</th>
+                <th class="px-3 py-2">Fecha</th>
+                <th class="px-3 py-2">Tipo</th>
+                <th class="px-3 py-2">Cliente</th>
+                <th class="px-3 py-2 text-right">Total</th>
+                <th class="px-3 py-2 text-right">Ganancia</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (v of ventas(); track v.id) {
+                <tr class="hover:bg-slate-50">
+                  <td class="px-3 py-2 font-medium">{{ v.numero }}</td>
+                  <td class="px-3 py-2">{{ v.created_at | date: 'dd/MM/yyyy hh:mm a' }}</td>
+                  <td class="px-3 py-2">{{ etiquetaTipo(v.tipo) }}</td>
+                  <td class="px-3 py-2">{{ v.cliente ?? '—' }}</td>
+                  <td class="px-3 py-2 text-right font-medium">${{ v.total | number: '1.2-2' }}</td>
+                  <td class="px-3 py-2 text-right text-indigo-600">${{ v.ganancia | number: '1.2-2' }}</td>
+                  <td class="px-3 py-2 text-right text-xs">
+                    @if (v.anulada) {
+                      <span class="font-semibold text-red-500">anulada</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="px-3 py-6 text-center text-slate-500">Sin ventas en el período.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  }
 </div>

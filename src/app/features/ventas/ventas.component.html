@@ -21,12 +21,14 @@
         <p>
           <b>No hay una caja abierta.</b> Sin caja abierta no se puede vender.
         </p>
-        <button
-          (click)="irACaja()"
-          class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
-        >
-          Ir a Caja
-        </button>
+        @if (auth.isJefe()) {
+          <button
+            (click)="irACaja()"
+            class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+          >
+            Ir a Caja
+          </button>
+        }
       </div>
     }
 

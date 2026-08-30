@@ -39,12 +39,20 @@ export const routes: Routes = [
       },
       {
         path: 'caja',
-        canActivate: [jefeGuard],
         loadComponent: () => import('./features/caja/caja.component').then((m) => m.CajaComponent),
       },
       {
         path: 'fiado',
         loadComponent: () => import('./features/fiado/fiado.component').then((m) => m.FiadoComponent),
+      },
+      {
+        path: 'gastos',
+        canActivate: [jefeGuard],
+        loadComponent: () => import('./features/gastos/gastos.component').then((m) => m.GastosComponent),
+      },
+      {
+        path: 'info',
+        loadComponent: () => import('./features/info/info.component').then((m) => m.InfoComponent),
       },
       {
         path: 'reportes',

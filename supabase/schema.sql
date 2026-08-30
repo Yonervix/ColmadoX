@@ -550,8 +550,8 @@ language plpgsql security definer set search_path = public as $$
 declare
   v_caja public.caja;
 begin
-  if not public.is_jefe() then
-    raise exception 'Solo el jefe puede abrir la caja';
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesión para abrir la caja';
   end if;
   if p_fondo_inicial is null or p_fondo_inicial < 0 then
     raise exception 'El fondo inicial debe ser un monto valido';
@@ -585,8 +585,8 @@ declare
   v_ganancia numeric(10,2);
   v_esperado numeric(10,2);
 begin
-  if not public.is_jefe() then
-    raise exception 'Solo el jefe puede ver la caja';
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesión para ver la caja';
   end if;
 
   select * into v_caja
@@ -702,8 +702,8 @@ declare
   v_esperado numeric(10,2);
   v_diferencia numeric(10,2);
 begin
-  if not public.is_jefe() then
-    raise exception 'Solo el jefe puede cerrar la caja';
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesión para cerrar la caja';
   end if;
   if p_dinero_fisico is null or p_dinero_fisico < 0 then
     raise exception 'Indica el dinero fisico para el arqueo';
@@ -773,8 +773,8 @@ language plpgsql security definer set search_path = public as $$
 declare
   v_resultado jsonb;
 begin
-  if not public.is_jefe() then
-    raise exception 'Solo el jefe puede ver la caja';
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesión para ver las ventas';
   end if;
 
   if p_caja_id is null then
@@ -802,6 +802,297 @@ begin
   ) s;
 
   return v_resultado;
+end;
+$$;
+
+create or replace function public.resumen_reportes(p_desde date, p_hasta date) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_ventas numeric(10,2);
+  v_ganancia numeric(10,2);
+  v_gastos numeric(10,2);
+  v_mermas numeric(10,2);
+  v_cobros numeric(10,2);
+  v_tickets integer;
+  v_por_dia jsonb;
+  v_top jsonb;
+  v_por_tipo jsonb;
+begin
+  if not public.is_jefe() then
+    raise exception 'Solo el jefe puede ver reportes';
+  end if;
+
+  if p_desde is null or p_hasta is null then
+    raise exception 'Indica el rango de fechas';
+  end if;
+
+  select coalesce(sum(total), 0) into v_ventas
+  from public.ventas
+  where (created_at at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta
+    and not anulada;
+
+  select coalesce(sum((vi.precio_venta - p.precio_compra) * vi.cantidad), 0) into v_ganancia
+  from public.venta_items vi
+  join public.ventas v on v.id = vi.venta_id
+  join public.productos p on p.id = vi.producto_id
+  where (v.created_at at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta
+    and not v.anulada;
+
+  select coalesce(sum(monto), 0) into v_gastos
+  from public.gastos
+  where (fecha at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta;
+
+  select coalesce(sum(p.cantidad * pr.precio_compra), 0) into v_mermas
+  from public.mermas p
+  join public.productos pr on pr.id = p.producto_id
+  where (p.fecha at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta;
+
+  select coalesce(sum(monto), 0) into v_cobros
+  from public.pagos_fiado
+  where (fecha at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta;
+
+  select coalesce(sum(1), 0) into v_tickets
+  from public.ventas
+  where (created_at at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta
+    and not anulada;
+
+  select coalesce(jsonb_agg(fila order by fila->>'fecha'), '[]'::jsonb) into v_por_dia
+  from (
+    select jsonb_build_object(
+      'fecha', to_char((v.created_at at time zone 'America/Santo_Domingo')::date, 'YYYY-MM-DD'),
+      'total', coalesce(sum(v.total), 0),
+      'ganancia', coalesce(sum((vi.precio_venta - p.precio_compra) * vi.cantidad), 0)
+    ) as fila
+    from public.ventas v
+    join public.venta_items vi on vi.venta_id = v.id
+    join public.productos p on p.id = vi.producto_id
+    where (v.created_at at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta
+      and not v.anulada
+    group by (v.created_at at time zone 'America/Santo_Domingo')::date
+  ) d;
+
+  select coalesce(jsonb_agg(fila order by (fila->>'total')::numeric desc), '[]'::jsonb) into v_top
+  from (
+    select jsonb_build_object(
+      'nombre', pr.nombre,
+      'cantidad', coalesce(sum(vi.cantidad), 0),
+      'total', coalesce(sum(vi.subtotal), 0)
+    ) as fila
+    from public.venta_items vi
+    join public.ventas v on v.id = vi.venta_id
+    join public.productos pr on pr.id = vi.producto_id
+    where (v.created_at at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta
+      and not v.anulada
+    group by pr.nombre
+    limit 8
+  ) t;
+
+  select coalesce(jsonb_agg(fila), '[]'::jsonb) into v_por_tipo
+  from (
+    select jsonb_build_object('tipo', v.tipo, 'total', coalesce(sum(v.total), 0)) as fila
+    from public.ventas v
+    where (v.created_at at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta
+      and not v.anulada
+    group by v.tipo
+  ) ty;
+
+  return jsonb_build_object(
+    'ventas', v_ventas,
+    'ganancia', v_ganancia,
+    'gastos', v_gastos,
+    'mermas_costo', v_mermas,
+    'cobros_fiado', v_cobros,
+    'tickets', v_tickets,
+    'por_dia', v_por_dia,
+    'top', v_top,
+    'por_tipo', v_por_tipo
+  );
+end;
+$$;
+
+create or replace function public.lista_ventas_rango(p_desde date, p_hasta date) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_resultado jsonb;
+begin
+  if not public.is_jefe() then
+    raise exception 'Solo el jefe puede ver reportes';
+  end if;
+
+  if p_desde is null or p_hasta is null then
+    raise exception 'Indica el rango de fechas';
+  end if;
+
+  select coalesce(jsonb_agg(j order by j->>'created_at' desc), '[]'::jsonb) into v_resultado
+  from (
+    select jsonb_build_object(
+      'id', v.id,
+      'numero', v.numero,
+      'tipo', v.tipo,
+      'total', v.total,
+      'anulada', v.anulada,
+      'created_at', v.created_at,
+      'cliente', c.nombre,
+      'ganancia', coalesce(sum((vi.precio_venta - pr.precio_compra) * vi.cantidad), 0)
+    ) as j
+    from public.ventas v
+    left join public.clientes c on c.id = v.cliente_id
+    join public.venta_items vi on vi.venta_id = v.id
+    join public.productos pr on pr.id = vi.producto_id
+    where (v.created_at at time zone 'America/Santo_Domingo')::date between p_desde and p_hasta
+    group by v.id, v.numero, v.tipo, v.total, v.anulada, v.created_at, c.nombre
+  ) s;
+
+  return v_resultado;
+end;
+$$;
+
+create or replace function public.registrar_pago(
+  p_cliente_id uuid,
+  p_monto numeric
+) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_caja_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesión para registrar un pago';
+  end if;
+
+  if p_cliente_id is null or p_monto <= 0 then
+    raise exception 'Indica un cliente y un monto válido';
+  end if;
+
+  select id into v_caja_id
+  from public.caja
+  where fecha = public.fecha_local() and estado = 'abierta'
+  order by abierta_at desc
+  limit 1;
+
+  if v_caja_id is null then
+    raise exception 'Debes abrir la caja de hoy antes de registrar pagos';
+  end if;
+
+  insert into public.pagos_fiado (cliente_id, monto, empleado_id, caja_id)
+  values (p_cliente_id, p_monto, auth.uid(), v_caja_id);
+end;
+$$;
+
+alter table public.ventas add column if not exists caja_id uuid references public.caja on delete set null;
+alter table public.pagos_fiado add column if not exists caja_id uuid references public.caja on delete set null;
+alter table public.gastos add column if not exists caja_id uuid references public.caja on delete set null;
+alter table public.gastos add column if not exists categoria text not null default 'general';
+
+create table if not exists public.presupuestos (
+  id uuid default gen_random_uuid() primary key,
+  mes date not null,
+  categoria text not null,
+  monto numeric(10,2) not null default 0,
+  created_at timestamptz not null default now(),
+  unique (mes, categoria)
+);
+
+alter table public.presupuestos enable row level security;
+
+create policy "Lectura general presupuestos" on public.presupuestos
+  for select to authenticated using (true);
+create policy "Jefe gestiona presupuestos" on public.presupuestos
+  for all to authenticated using (public.is_jefe()) with check (public.is_jefe());
+
+create or replace function public.registrar_gasto(
+  p_descripcion text,
+  p_monto numeric,
+  p_categoria text default 'general'
+) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_caja_id uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesión para registrar un gasto';
+  end if;
+
+  if p_descripcion is null or trim(p_descripcion) = '' then
+    raise exception 'Describe el gasto';
+  end if;
+
+  if p_monto is null or p_monto <= 0 then
+    raise exception 'El monto debe ser mayor a cero';
+  end if;
+
+  if p_categoria is null or trim(p_categoria) = '' then
+    p_categoria := 'general';
+  else
+    p_categoria := lower(trim(p_categoria));
+  end if;
+
+  select id into v_caja_id
+  from public.caja
+  where fecha = public.fecha_local() and estado = 'abierta'
+  order by abierta_at desc
+  limit 1;
+
+  insert into public.gastos (descripcion, monto, categoria, caja_id, empleado_id)
+  values (trim(p_descripcion), p_monto, p_categoria, v_caja_id, auth.uid());
+end;
+$$;
+
+create or replace function public.presupuesto_mes(p_mes date) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_inicio date;
+  v_fin date;
+  v_total_presupuesto numeric(10,2);
+  v_total_gastado numeric(10,2);
+  v_filas jsonb;
+begin
+  if not public.is_jefe() then
+    raise exception 'Solo el jefe puede ver el presupuesto';
+  end if;
+
+  if p_mes is null then
+    raise exception 'Indica el mes';
+  end if;
+
+  v_inicio := date_trunc('month', p_mes)::date;
+  v_fin := (v_inicio + interval '1 month' - interval '1 day')::date;
+
+  select coalesce(sum(monto), 0) into v_total_presupuesto
+  from public.presupuestos
+  where mes = v_inicio;
+
+  select coalesce(sum(g.monto), 0) into v_total_gastado
+  from public.gastos g
+  where (g.fecha at time zone 'America/Santo_Domingo')::date between v_inicio and v_fin;
+
+  select coalesce(jsonb_agg(f order by f->>'categoria'), '[]'::jsonb) into v_filas
+  from (
+    with cats as (
+      select categoria
+      from public.presupuestos
+      where mes = v_inicio
+      union
+      select distinct lower(trim(categoria))
+      from public.gastos
+      where (fecha at time zone 'America/Santo_Domingo')::date between v_inicio and v_fin
+    )
+    select jsonb_build_object(
+      'categoria', c.categoria,
+      'presupuesto', coalesce(
+        (select p2.monto from public.presupuestos p2 where p2.mes = v_inicio and p2.categoria = c.categoria), 0),
+      'gastado', coalesce(
+        (select sum(g2.monto) from public.gastos g2
+         where lower(trim(g2.categoria)) = c.categoria
+           and (g2.fecha at time zone 'America/Santo_Domingo')::date between v_inicio and v_fin), 0)
+    ) as f
+    from cats c
+  ) s;
+
+  return jsonb_build_object(
+    'total_presupuesto', v_total_presupuesto,
+    'total_gastado', v_total_gastado,
+    'filas', v_filas
+  );
 end;
 $$;
 

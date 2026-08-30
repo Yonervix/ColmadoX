@@ -13,6 +13,10 @@ export interface CajaDia {
   cerrada_at: string | null;
 }
 
+export interface CajaHistoria extends CajaDia {
+  abierta_at: string;
+}
+
 export interface ResumenCaja {
   caja: CajaDia | null;
   ventas_contado: number;
@@ -79,6 +83,16 @@ export class CajaService {
     const { data, error } = await this.db.rpc('lista_ventas_caja', { p_caja_id: cajaId });
     if (error) throw new Error(error.message);
     return ((data ?? []) as unknown) as VentaDia[];
+  }
+
+  async listarCajas(): Promise<CajaHistoria[]> {
+    const { data, error } = await this.db
+      .from('caja')
+      .select('id, fecha, fondo_inicial, estado, esperado, dinero_fisico, diferencia, ganancia, cerrada_at, abierta_at')
+      .order('abierta_at', { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as CajaHistoria[];
   }
 
   async anularVenta(ventaId: string): Promise<void> {

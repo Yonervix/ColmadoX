@@ -37,7 +37,9 @@ const todas: NavItem[] = [
   { path: 'inventario', label: 'Inventario', jefe: true },
   { path: 'compras', label: 'Compras', jefe: true },
   { path: 'mermas', label: 'Mermas', jefe: true },
-  { path: 'caja', label: 'Caja', jefe: true },
+  { path: 'caja', label: 'Caja' },
   { path: 'fiado', label: 'Fiado' },
+  { path: 'gastos', label: 'Gastos', jefe: true },
   { path: 'reportes', label: 'Reportes', jefe: true },
+  { path: 'info', label: 'Sobre mí' },
 ];
