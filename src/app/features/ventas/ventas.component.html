@@ -16,6 +16,20 @@
       <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
     }
 
+    @if (sinCaja()) {
+      <div class="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p>
+          <b>No hay una caja abierta.</b> Sin caja abierta no se puede vender.
+        </p>
+        <button
+          (click)="irACaja()"
+          class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+        >
+          Ir a Caja
+        </button>
+      </div>
+    }
+
     @if (cargando()) {
       <p class="text-slate-500">Cargando productos…</p>
     } @else {
@@ -181,7 +195,7 @@
 
         <button
           (click)="cobrar()"
-          [disabled]="cobrando() || carrito().length === 0"
+          [disabled]="cobrando() || carrito().length === 0 || sinCaja()"
           class="w-full rounded-xl bg-emerald-600 py-3 text-base font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
         >
           {{ cobrando() ? 'Cobrando…' : 'Cobrar' }}

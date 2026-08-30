@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
+import { Router } from '@angular/router';
 import {
   VentaService,
   type Cliente,
@@ -21,6 +22,7 @@ interface Linea {
 })
 export class VentasComponent implements OnInit {
   private servicio = inject(VentaService);
+  private router = inject(Router);
 
   protected readonly productos = signal<ProductoVenta[]>([]);
   protected readonly clientes = signal<Cliente[]>([]);
@@ -34,6 +36,7 @@ export class VentasComponent implements OnInit {
   protected readonly descuento = signal(0);
   protected readonly nuevoCliente = signal('');
   protected readonly error = signal('');
+  protected readonly sinCaja = signal(false);
   protected readonly recibo = signal<{ venta: VentaRegistrada; lineas: Linea[] } | null>(null);
 
   protected readonly productosFiltrados = computed(() => {
@@ -65,12 +68,14 @@ export class VentasComponent implements OnInit {
     this.cargando.set(true);
     this.error.set('');
     try {
-      const [productos, clientes] = await Promise.all([
+      const [productos, clientes, cajaOk] = await Promise.all([
         this.servicio.listarProductos(),
         this.servicio.listarClientes(),
+        this.servicio.cajaAbierta(),
       ]);
       this.productos.set(productos);
       this.clientes.set(clientes);
+      this.sinCaja.set(!cajaOk);
     } catch (e) {
       this.error.set((e as Error).message);
     }
@@ -142,6 +147,11 @@ export class VentasComponent implements OnInit {
       this.error.set('Agrega productos al carrito.');
       return;
     }
+    if (this.sinCaja() || !(await this.servicio.cajaAbierta())) {
+      this.sinCaja.set(true);
+      this.error.set('Debes abrir la caja de hoy antes de vender.');
+      return;
+    }
     if (this.tipo() === 'contado') {
       const pagado = this.pagoCon();
       if (pagado == null || pagado < this.total()) {
@@ -182,6 +192,10 @@ export class VentasComponent implements OnInit {
   protected cerrarRecibo() {
     this.recibo.set(null);
     this.cargarTodo();
+  }
+
+  protected irACaja() {
+    this.router.navigate(['/caja']);
   }
 
   protected etiquetaTipo(t: TipoProducto): string {

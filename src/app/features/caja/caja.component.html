@@ -1,4 +1,199 @@
-<div class="rounded-xl bg-white p-10 text-center shadow-sm">
-  <h1 class="text-2xl font-bold">Caja (Fase 6)</h1>
-  <p class="mt-2 text-slate-500">Fondo inicial, gastos del día, anulaciones y cierre de caja.</p>
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold">Caja del día</h1>
+    <p class="text-sm text-slate-500">
+      Sin caja abierta no se puede vender. Cada caja guarda su propio historial de ventas y gastos.
+    </p>
+  </div>
+
+  @if (cargando()) {
+    <p class="text-slate-500">Cargando…</p>
+  } @else {
+    @if (error()) {
+      <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+    }
+
+    @let r = resumen();
+    @let abierta = r?.caja?.estado === 'abierta';
+
+    @if (!r?.caja || r?.caja.estado === 'cerrada') {
+      @if (r?.caja?.estado === 'cerrada') {
+        <div
+          class="rounded-xl border p-4 text-sm"
+          [class]="r!.caja.diferencia === 0
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            : 'border-amber-200 bg-amber-50 text-amber-800'"
+        >
+          <p class="font-semibold">
+            Caja cerrada · {{ etiquetaDiferencia(r!.caja!.diferencia ?? 0) }}
+          </p>
+          <p class="mt-1">
+            Debe haber ${{ r!.caja!.esperado | number: '1.2-2' }} · Contaste ${{
+              r!.caja!.dinero_fisico | number: '1.2-2'
+            }} · Ganancia ${{ r!.caja!.ganancia | number: '1.2-2' }}
+          </p>
+          <p class="mt-1 text-xs text-slate-500">
+            Cerrada {{ r!.caja!.cerrada_at | date: 'dd/MM/yyyy hh:mm a' }} · sus ventas quedaron en su historial
+          </p>
+        </div>
+      }
+
+      <div class="rounded-xl bg-white p-6 shadow-sm">
+        <p class="mb-4 text-slate-600">
+          {{ r?.caja?.estado === 'cerrada' ? 'Abre una nueva caja cuando quieras seguir vendiendo:' : 'Aún no has abierto la caja de hoy. Indica el fondo inicial:' }}
+        </p>
+        <div class="flex max-w-xs items-center gap-2">
+          <span class="text-lg font-semibold text-slate-700">$</span>
+          <input
+            type="number"
+            [(ngModel)]="fondo"
+            name="fondo"
+            min="0"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          />
+          <button
+            (click)="abrir()"
+            [disabled]="ocupado()"
+            class="shrink-0 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+          >
+            Abrir caja
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (abierta) {
+      <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Fondo inicial</p>
+          <p class="text-lg font-bold">${{ r!.caja!.fondo_inicial | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Ventas contado</p>
+          <p class="text-lg font-bold text-emerald-600">${{ r!.ventas_contado | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Cobros fiado</p>
+          <p class="text-lg font-bold text-emerald-600">${{ r!.cobros_fiado | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Gastos de esta caja</p>
+          <p class="text-lg font-bold text-red-600">${{ r!.gastos | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Debe haber en físico</p>
+          <p class="text-lg font-bold">${{ r!.esperado | number: '1.2-2' }}</p>
+        </div>
+        <div class="rounded-xl bg-white p-4 shadow-sm">
+          <p class="text-xs uppercase text-slate-500">Ganancia total</p>
+          <p class="text-lg font-bold text-indigo-600">${{ r!.ganancia | number: '1.2-2' }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+          <h2 class="mb-4 font-semibold">Gastos de esta caja</h2>
+          <div class="space-y-2">
+            <input
+              type="text"
+              [(ngModel)]="gastoDesc"
+              name="gastoDesc"
+              placeholder="Descripción (ej. pasaje, agua)"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+            <div class="flex gap-2">
+              <span class="flex items-center font-semibold text-slate-700">$</span>
+              <input
+                type="number"
+                [(ngModel)]="gastoMonto"
+                name="gastoMonto"
+                min="0"
+                placeholder="0.00"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+              />
+              <button
+                (click)="agregarGasto()"
+                [disabled]="ocupado()"
+                class="shrink-0 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
+              >
+                Agregar
+              </button>
+            </div>
+          </div>
+          <ul class="mt-4 max-h-60 divide-y divide-slate-100 overflow-y-auto text-sm">
+            @for (g of gastos(); track g.id) {
+              <li class="flex justify-between py-2">
+                <span>{{ g.descripcion }}</span>
+                <span class="font-semibold text-red-600">${{ g.monto | number: '1.2-2' }}</span>
+              </li>
+            } @empty {
+              <li class="py-2 text-slate-500">Sin gastos en esta caja.</li>
+            }
+          </ul>
+        </div>
+
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+          <h2 class="mb-4 font-semibold">Ventas de esta caja</h2>
+          <ul class="max-h-72 divide-y divide-slate-100 overflow-y-auto text-sm">
+            @for (v of ventas(); track v.id) {
+              <li class="flex items-center justify-between gap-2 py-2">
+                <div class="min-w-0">
+                  <p class="truncate font-medium">
+                    #{{ v.numero }} · {{ v.cliente ?? (v.tipo === 'fiado' ? 'Fiado' : 'Contado') }}
+                  </p>
+                  <p class="text-xs text-slate-500">
+                    {{ v.created_at | date: 'hh:mm a' }}
+                    @if (v.anulada) {
+                      <span class="font-semibold text-red-500"> · anulada</span>
+                    }
+                  </p>
+                </div>
+                <div class="flex shrink-0 items-center gap-3">
+                  <span class="text-xs text-indigo-600">ganancia ${{ v.ganancia | number: '1.2-2' }}</span>
+                  <span class="font-semibold">${{ v.total | number: '1.2-2' }}</span>
+                  <button
+                    (click)="anular(v)"
+                    [disabled]="ocupado() || v.anulada"
+                    class="rounded-lg bg-red-100 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-200 disabled:opacity-40"
+                  >
+                    {{ v.anulada ? 'Anulada' : 'Anular' }}
+                  </button>
+                </div>
+              </li>
+            } @empty {
+              <li class="py-2 text-slate-500">Todavía no hay ventas en esta caja.</li>
+            }
+          </ul>
+        </div>
+
+        <div class="rounded-xl bg-white p-6 shadow-sm">
+          <h2 class="mb-4 font-semibold">Cerrar caja</h2>
+          <p class="mb-3 text-sm text-slate-600">
+            Cuenta el dinero físico y escribe el total. Debe haber <b>${{ r!.esperado | number: '1.2-2' }}</b>.
+          </p>
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-slate-700">$</span>
+            <input
+              type="number"
+              [(ngModel)]="fisico"
+              name="fisico"
+              min="0"
+              placeholder="0.00"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+          <button
+            (click)="cerrar()"
+            [disabled]="ocupado()"
+            class="mt-4 w-full rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+          >
+            Cerrar caja (arqueo)
+          </button>
+          <p class="mt-3 text-xs text-slate-500">
+            Al cerrar, la caja y sus ventas quedan guardadas como historial.
+          </p>
+        </div>
+      </div>
+    }
+  }
 </div>

@@ -61,6 +61,12 @@ export class VentaService {
     return (data ?? []) as Cliente[];
   }
 
+  async cajaAbierta(): Promise<boolean> {
+    const { data, error } = await this.db.rpc('caja_abierta_hoy');
+    if (error) throw new Error(error.message);
+    return !!data;
+  }
+
   async crearCliente(nombre: string, telefono?: string): Promise<Cliente> {
     const { data, error } = await this.db
       .from('clientes')

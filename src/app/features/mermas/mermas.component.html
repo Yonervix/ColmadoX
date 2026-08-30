@@ -1,4 +1,180 @@
-<div class="rounded-xl bg-white p-10 text-center shadow-sm">
-  <h1 class="text-2xl font-bold">Mermas (Fase 5)</h1>
-  <p class="mt-2 text-slate-500">Bajantes, pérdidas y conteo/confirmación de inventario.</p>
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold">Mermas y Conteo</h1>
+    <p class="text-sm text-slate-500">Bajantes, pérdidas y verificación del inventario físico.</p>
+  </div>
+
+  @if (error()) {
+    <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+  }
+
+  <div class="inline-flex rounded-xl bg-slate-200 p-1">
+    <button
+      (click)="cambiarPestana('mermas')"
+      [class]="pestana() === 'mermas' ? 'bg-white font-semibold text-emerald-700 shadow-sm' : 'text-slate-600'"
+      class="rounded-lg px-4 py-2 text-sm transition"
+    >
+      Registrar merma
+    </button>
+    <button
+      (click)="cambiarPestana('conteo')"
+      [class]="pestana() === 'conteo' ? 'bg-white font-semibold text-emerald-700 shadow-sm' : 'text-slate-600'"
+      class="rounded-lg px-4 py-2 text-sm transition"
+    >
+      Conteo de inventario
+    </button>
+  </div>
+
+  @if (pestana() === 'mermas') {
+    <div class="space-y-4">
+      <div class="rounded-xl bg-white p-6 shadow-sm">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="producto">Producto</label>
+            <select
+              id="producto"
+              [(ngModel)]="productoId"
+              name="producto"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="">Selecciona…</option>
+              @for (p of productos(); track p.id) {
+                <option [ngValue]="p.id">{{ p.nombre }} (stock: {{ p.stock }})</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="cantidad">Cantidad</label>
+            <input
+              id="cantidad"
+              type="number"
+              [(ngModel)]="cantidad"
+              name="cantidad"
+              min="1"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="motivo">Motivo</label>
+            <select
+              id="motivo"
+              [(ngModel)]="motivo"
+              name="motivo"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            >
+              @for (m of motivos; track m) {
+                <option>{{ m }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end">
+          <button
+            (click)="registrar()"
+            [disabled]="registrando()"
+            class="rounded-lg bg-red-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+          >
+            {{ registrando() ? 'Registrando…' : 'Registrar bajante' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl bg-white shadow-sm">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Fecha</th>
+              <th class="px-4 py-3">Producto</th>
+              <th class="px-4 py-3">Cantidad</th>
+              <th class="px-4 py-3">Motivo</th>
+              <th class="px-4 py-3">Origen</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (m of historial(); track m.id) {
+              <tr class="hover:bg-slate-50">
+                <td class="px-4 py-3">{{ m.fecha | date: 'dd/MM/yyyy hh:mm a' }}</td>
+                <td class="px-4 py-3 font-medium">{{ m.productos?.nombre ?? '—' }}</td>
+                <td class="px-4 py-3 font-semibold text-red-600">−{{ m.cantidad }}</td>
+                <td class="px-4 py-3">{{ m.motivo }}</td>
+                <td class="px-4 py-3">
+                  <span
+                    [class]="m.origen === 'conteo'
+                      ? 'rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700'
+                      : 'rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600'"
+                  >
+                    {{ m.origen }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="px-4 py-8 text-center text-slate-500">Aún no hay mermas registradas.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  @if (pestana() === 'conteo') {
+    <div class="rounded-xl bg-white p-6 shadow-sm">
+      @if (!creadoConteo()) {
+        <div class="text-center">
+          <p class="mb-4 text-slate-600">
+            Cuenta físicamente tus productos y luego corrije el stock del sistema con las diferencias.
+          </p>
+          <button
+            (click)="iniciarConteo()"
+            class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+          >
+            Iniciar nuevo conteo
+          </button>
+        </div>
+      } @else {
+        <p class="mb-4 text-sm text-slate-600">
+          Conteo en curso. Ajusta el <b>físico</b> de cada producto con lo que realmente tienes:
+        </p>
+
+        <div class="max-h-96 space-y-2 overflow-y-auto">
+          @for (item of conteoItems(); track item.producto_id) {
+            <div class="grid grid-cols-12 items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+              <p class="col-span-5 truncate text-sm font-medium">{{ item.nombre }}</p>
+              <div class="col-span-3 flex items-center gap-1 text-xs text-slate-500">
+                Sistema: <span class="font-semibold">{{ item.stock_sistema }}</span>
+              </div>
+              <div class="col-span-2">
+                <input
+                  type="number"
+                  [ngModel]="item.stock_fisico"
+                  (ngModelChange)="setFisico(item, $event)"
+                  name="fisico{{ item.producto_id }}"
+                  min="0"
+                  class="w-full rounded-lg border border-slate-300 px-2 py-1 text-right focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+              <div class="col-span-2 text-right text-xs font-semibold">
+                <span
+                  [class]="diferencia(item) < 0 ? 'text-red-600' : diferencia(item) > 0 ? 'text-emerald-600' : 'text-slate-400'"
+                >
+                  {{ diferencia(item) > 0 ? '+' : '' }}{{ diferencia(item) }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="mt-4 flex justify-end">
+          <button
+            (click)="cerrarConteo()"
+            [disabled]="registrando()"
+            class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {{ registrando() ? 'Ajustando…' : 'Cerrar conteo y ajustar stock' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
 </div>
