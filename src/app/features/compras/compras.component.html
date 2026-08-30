@@ -1,4 +1,143 @@
-<div class="rounded-xl bg-white p-10 text-center shadow-sm">
-  <h1 class="text-2xl font-bold">Compras (Fase 3)</h1>
-  <p class="mt-2 text-slate-500">Registro de compras que suman stock automáticamente.</p>
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Compras</h1>
+      <p class="text-sm text-slate-500">
+        Registra la compra al proveedor: el stock sube solo y el costo se actualiza a la última compra.
+      </p>
+    </div>
+    <button
+      (click)="historialAbierto.set(!historialAbierto())"
+      class="rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+    >
+      {{ historialAbierto() ? 'Ocultar historial' : 'Historial de compras' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+  }
+
+  <div class="rounded-xl bg-white p-6 shadow-sm">
+    <h2 class="mb-4 text-lg font-bold">Comprar al proveedor</h2>
+
+    <div class="mb-4 flex items-end gap-3">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-slate-700" for="proveedor">Proveedor</label>
+        <input
+          id="proveedor"
+          type="text"
+          [(ngModel)]="proveedor"
+          name="proveedor"
+          placeholder="Ej. Comercial El Carmen"
+          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+        />
+      </div>
+    </div>
+
+    <p class="mb-2 text-xs text-slate-400">
+      Sugerencia: el costo se captura por unidad de venta. Si compras una caja de 12 refrescos a 300, pon
+      cantidad 12 y costo por unidad 25.
+    </p>
+
+    <div class="space-y-2">
+      @for (item of items(); track $index) {
+        <div class="grid grid-cols-12 items-center gap-2">
+          <select
+            [ngModel]="item.producto_id"
+            (ngModelChange)="onCambiarProducto(item, $event)"
+            name="producto{{ $index }}"
+            class="col-span-5 rounded-lg border border-slate-300 bg-white px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          >
+            <option value="">Selecciona producto…</option>
+            @for (p of productos(); track p.id) {
+              <option [ngValue]="p.id">
+                {{ p.nombre }} ({{ etiquetaTipo(p.tipo) }})
+              </option>
+            }
+          </select>
+          <input
+            [(ngModel)]="item.cantidad"
+            type="number"
+            name="cantidad{{ $index }}"
+            min="1"
+            placeholder="Cant."
+            class="col-span-2 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          />
+          <input
+            [(ngModel)]="item.costo_unitario"
+            type="number"
+            name="costo{{ $index }}"
+            min="0"
+            step="0.01"
+            placeholder="Costo/unid."
+            class="col-span-3 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          />
+          <button
+            (click)="quitarItem($index)"
+            class="col-span-2 rounded-lg px-2 py-2 text-sm text-red-600 hover:bg-red-50"
+          >
+            Quitar
+          </button>
+        </div>
+      }
+    </div>
+
+    <button
+      (click)="agregarItem()"
+      class="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+    >
+      + Agregar producto
+    </button>
+
+    <div class="mt-4 flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
+      <span class="text-sm font-medium text-slate-700">Total de la compra</span>
+      <span class="text-xl font-bold text-slate-900">${{ totalActual() | number: '1.2-2' }}</span>
+    </div>
+
+    <div class="mt-4 flex justify-end">
+      <button
+        (click)="guardar()"
+        [disabled]="guardando()"
+        class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+      >
+        {{ guardando() ? 'Registrando…' : 'Registrar compra' }}
+      </button>
+    </div>
+  </div>
+
+  @if (historialAbierto()) {
+    <div class="overflow-x-auto rounded-xl bg-white shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Fecha</th>
+            <th class="px-4 py-3">Proveedor</th>
+            <th class="px-4 py-3">Productos</th>
+            <th class="px-4 py-3 text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (c of compras(); track c.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3">{{ c.fecha | date: 'dd/MM/yyyy hh:mm a' }}</td>
+              <td class="px-4 py-3 font-medium">{{ c.proveedor }}</td>
+              <td class="px-4 py-3">
+                @for (item of c.compra_items; track item.id) {
+                  <span class="mr-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                    {{ item.cantidad }} uds
+                  </span>
+                }
+              </td>
+              <td class="px-4 py-3 text-right font-semibold">${{ c.total | number: '1.2-2' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="px-4 py-8 text-center text-slate-500">Aún no hay compras registradas.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </div>

@@ -160,6 +160,20 @@ insert into storage.buckets (id, name, public)
 values ('productos', 'productos', true)
 on conflict do nothing;
 
+create policy "Fotos publicas" on storage.objects
+  for select to public using (bucket_id = 'productos');
+
+create policy "Subir fotos productos" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'productos');
+
+create policy "Actualizar fotos productos" on storage.objects
+  for update to authenticated
+  using (bucket_id = 'productos') with check (bucket_id = 'productos');
+
+create policy "Eliminar fotos productos" on storage.objects
+  for delete to authenticated using (bucket_id = 'productos');
+
 create or replace function public.is_jefe() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (
@@ -303,3 +317,164 @@ select
 from public.clientes c
 left join public.ventas v on v.cliente_id = c.id
 group by c.id, c.nombre, c.telefono;
+
+create or replace view public.productos_venta
+with (security_invoker = true)
+as
+select id, nombre, tipo, foto_url, stock, stock_minimo, precio_venta
+from public.productos
+where activo = true;
+
+create or replace function public.registrar_venta(
+  p_tipo venta_tipo,
+  p_cliente_id uuid,
+  p_pago_con numeric,
+  p_descuento numeric,
+  p_items jsonb
+) returns public.ventas
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_venta public.ventas;
+  v_item jsonb;
+  v_producto_id uuid;
+  v_cantidad integer;
+  v_precio numeric(10,2);
+  v_total numeric(10,2) := 0;
+  v_stock_actual integer;
+begin
+  if auth.uid() is null then
+    raise exception 'Debes iniciar sesión para vender';
+  end if;
+
+  if p_items is null or jsonb_array_length(p_items) = 0 then
+    raise exception 'Una venta debe incluir productos';
+  end if;
+
+  if p_tipo = 'fiado' and p_cliente_id is null then
+    raise exception 'Para una venta a fiado debes elegir un cliente';
+  end if;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    v_producto_id := (v_item->>'producto_id')::uuid;
+    v_cantidad := (v_item->>'cantidad')::int;
+
+    if v_cantidad <= 0 then
+      raise exception 'Las cantidades deben ser positivas';
+    end if;
+
+    select stock into v_stock_actual from public.productos where id = v_producto_id;
+    if v_stock_actual is null then
+      raise exception 'Producto no encontrado';
+    end if;
+    if v_stock_actual < v_cantidad then
+      raise exception 'Stock insuficiente para uno de los productos';
+    end if;
+
+    select precio_venta into v_precio from public.productos where id = v_producto_id;
+    v_total := v_total + (v_precio * v_cantidad);
+  end loop;
+
+  v_total := v_total - coalesce(p_descuento, 0);
+
+  insert into public.ventas (tipo, cliente_id, total, descuento, pago_con, cambio, empleado_id)
+  values (
+    p_tipo,
+    p_cliente_id,
+    v_total,
+    coalesce(p_descuento, 0),
+    case when p_tipo = 'contado' then p_pago_con else null end,
+    case when p_tipo = 'contado' and p_pago_con is not null then greatest(p_pago_con - v_total, 0) else 0 end,
+    auth.uid()
+  )
+  returning * into v_venta;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    v_producto_id := (v_item->>'producto_id')::uuid;
+    v_cantidad := (v_item->>'cantidad')::int;
+    v_precio := (v_item->>'precio_venta')::numeric;
+
+    insert into public.venta_items (venta_id, producto_id, cantidad, precio_venta, subtotal)
+    values (v_venta.id, v_producto_id, v_cantidad, v_precio, v_precio * v_cantidad);
+
+    update public.productos
+    set stock = stock - v_cantidad,
+        updated_at = now()
+    where id = v_producto_id;
+
+    insert into public.movimientos_stock (producto_id, concepto, cantidad, referencia, created_by)
+    values (v_producto_id, 'venta', v_cantidad, v_venta.id, auth.uid());
+  end loop;
+
+  return v_venta;
+end;
+$$;
+
+drop policy if exists "Lectura general" on public.compras;
+create policy "Jefe lee compras" on public.compras
+  for select to authenticated using (public.is_jefe());
+
+drop policy if exists "Lectura general" on public.compra_items;
+create policy "Jefe lee items de compra" on public.compra_items
+  for select to authenticated using (public.is_jefe());
+
+drop policy if exists "Lectura general" on public.caja;
+create policy "Jefe lee caja" on public.caja
+  for select to authenticated using (public.is_jefe());
+
+create or replace function public.registrar_compra(
+  p_proveedor text,
+  p_items jsonb
+) returns uuid
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_compra_id uuid;
+  v_item jsonb;
+  v_producto_id uuid;
+  v_cantidad integer;
+  v_costo numeric(10,2);
+  v_total numeric(10,2) := 0;
+begin
+  if not public.is_jefe() then
+    raise exception 'Solo el jefe puede registrar compras';
+  end if;
+
+  if p_items is null or jsonb_array_length(p_items) = 0 then
+    raise exception 'Debe incluir al menos un producto';
+  end if;
+
+  select sum(((v_item->>'cantidad')::int) * ((v_item->>'costo_unitario')::numeric))
+  into v_total
+  from (
+    select jsonb_array_elements(p_items) as v_item
+  ) t;
+
+  insert into public.compras (proveedor, fecha, total, created_by)
+  values (p_proveedor, now(), v_total, auth.uid())
+  returning id into v_compra_id;
+
+  for v_item in select jsonb_array_elements(p_items)
+  loop
+    v_producto_id := (v_item->>'producto_id')::uuid;
+    v_cantidad := (v_item->>'cantidad')::int;
+    v_costo := (v_item->>'costo_unitario')::numeric;
+
+    insert into public.compra_items (compra_id, producto_id, cantidad, costo_unitario)
+    values (v_compra_id, v_producto_id, v_cantidad, v_costo);
+
+    update public.productos
+    set stock = stock + v_cantidad,
+        precio_compra = v_costo,
+        updated_at = now()
+    where id = v_producto_id;
+
+    insert into public.movimientos_stock (producto_id, concepto, cantidad, referencia, created_by)
+    values (v_producto_id, 'compra', v_cantidad, v_compra_id, auth.uid());
+  end loop;
+
+  return v_compra_id;
+end;
+$$;

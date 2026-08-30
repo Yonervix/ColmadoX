@@ -1,4 +1,271 @@
-<div class="rounded-xl bg-white p-10 text-center shadow-sm">
-  <h1 class="text-2xl font-bold">Inventario (Fase 2)</h1>
-  <p class="mt-2 text-slate-500">Productos mixtos: sueltos, paquetes y cajas con foto, costo, venta y margen.</p>
+<div class="space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold">Inventario</h1>
+      <p class="text-sm text-slate-500">Productos sueltos, paquetes y cajas con foto, costo, venta y margen.</p>
+    </div>
+    <button
+      (click)="abrirNuevo()"
+      class="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+    >
+      + Nuevo producto
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="text-slate-500">Cargando inventario…</p>
+  } @else if (productos().length === 0) {
+    <div class="rounded-xl bg-white p-10 text-center shadow-sm">
+      <p class="text-slate-500">Aún no hay productos. Crea el primero con el botón de arriba.</p>
+    </div>
+  } @else {
+    <div class="overflow-x-auto rounded-xl bg-white shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-4 py-3">Foto</th>
+            <th class="px-4 py-3">Producto</th>
+            <th class="px-4 py-3">Tipo</th>
+            <th class="px-4 py-3">Stock</th>
+            <th class="px-4 py-3">Costo</th>
+            <th class="px-4 py-3">Venta</th>
+            <th class="px-4 py-3">Margen</th>
+            <th class="px-4 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @for (p of productos(); track p.id) {
+            <tr class="hover:bg-slate-50">
+              <td class="px-4 py-3">
+                @if (p.foto_url) {
+                  <img [src]="p.foto_url" alt="" class="h-10 w-10 rounded-lg object-cover" />
+                } @else {
+                  <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
+                    Sin foto
+                  </div>
+                }
+              </td>
+              <td class="px-4 py-3">
+                <p class="font-medium">{{ p.nombre }}</p>
+                <p class="text-xs text-slate-400">{{ p.categorias?.nombre ?? 'Sin categoría' }}</p>
+              </td>
+              <td class="px-4 py-3">{{ etiquetaTipo(p.tipo) }}</td>
+              <td class="px-4 py-3">
+                <span
+                  [class]="stockBajo(p)
+                    ? 'rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700'
+                    : 'rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-700'"
+                >
+                  {{ p.stock }}
+                </span>
+                @if (stockBajo(p)) {
+                  <span class="ml-1 text-xs text-red-600">bajo</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-slate-500">${{ p.precio_compra }}</td>
+              <td class="px-4 py-3 font-semibold">${{ p.precio_venta }}</td>
+              <td class="px-4 py-3">
+                <span
+                  [class]="margen(p) >= 30 ? 'text-emerald-600' : margen(p) >= 15 ? 'text-amber-600' : 'text-red-600'"
+                  class="font-semibold"
+                >
+                  {{ margen(p) | number: '1.0-1' }}%
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button
+                  (click)="abrirEditar(p)"
+                  class="rounded-lg px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                >
+                  Editar
+                </button>
+                <button
+                  (click)="desactivar(p)"
+                  class="rounded-lg px-3 py-1 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                  Quitar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
 </div>
+
+@if (modalAbierto()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="cerrarModal()">
+    <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-bold">{{ editandoId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+        <button (click)="cerrarModal()" class="rounded-lg px-2 py-1 text-slate-500 hover:bg-slate-100">✕</button>
+      </div>
+
+      <div class="space-y-4">
+        <div class="flex items-center gap-4">
+          @if (fotoPreview()) {
+            <img [src]="fotoPreview()" alt="" class="h-16 w-16 rounded-xl object-cover" />
+          } @else {
+            <div class="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400">
+              Sin foto
+            </div>
+          }
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-slate-700" for="foto">Foto del producto</label>
+            <input
+              id="foto"
+              type="file"
+              accept="image/*"
+              (change)="onFoto($event)"
+              class="mt-1 block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700" for="nombre">Nombre</label>
+          <input
+            id="nombre"
+            type="text"
+            [(ngModel)]="form.nombre"
+            name="nombre"
+            placeholder="Ej. Menta chiquita"
+            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="tipo">Tipo</label>
+            <select
+              id="tipo"
+              [(ngModel)]="form.tipo"
+              name="tipo"
+              class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="unidad">Suelto (unidad)</option>
+              <option value="paquete">Paquete</option>
+              <option value="caja">Caja</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="categoria">Categoría</label>
+            <div class="mt-1 flex gap-2">
+              <select
+                id="categoria"
+                [(ngModel)]="form.categoria_id"
+                name="categoria"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:border-emerald-500 focus:outline-none"
+              >
+                <option [ngValue]="null">Sin categoría</option>
+                @for (c of categorias(); track c.id) {
+                  <option [ngValue]="c.id">{{ c.nombre }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <input
+            type="text"
+            [(ngModel)]="nuevaCategoria"
+            name="nuevaCategoria"
+            placeholder="Nueva categoría…"
+            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+          />
+          <button
+            type="button"
+            (click)="agregarCategoria()"
+            class="shrink-0 rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            Agregar
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="stock">Stock</label>
+            <input
+              id="stock"
+              type="number"
+              [(ngModel)]="form.stock"
+              name="stock"
+              min="0"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="stockMinimo">Mínimo (alerta)</label>
+            <input
+              id="stockMinimo"
+              type="number"
+              [(ngModel)]="form.stock_minimo"
+              name="stockMinimo"
+              min="0"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="precioCompra">Costo de compra ($)</label>
+            <input
+              id="precioCompra"
+              type="number"
+              [(ngModel)]="form.precio_compra"
+              name="precioCompra"
+              min="0"
+              step="0.01"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700" for="precioVenta">Precio de venta ($)</label>
+            <input
+              id="precioVenta"
+              type="number"
+              [(ngModel)]="form.precio_venta"
+              name="precioVenta"
+              min="0"
+              step="0.01"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
+          <span class="text-sm text-slate-600">Margen de ganancia</span>
+          <span
+            [class]="margenForm() >= 30 ? 'text-emerald-600' : margenForm() >= 15 ? 'text-amber-600' : 'text-red-600'"
+            class="text-lg font-bold"
+          >
+            {{ margenForm() | number: '1.0-1' }}%
+          </span>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button
+            (click)="cerrarModal()"
+            class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+          >
+            Cancelar
+          </button>
+          <button
+            (click)="guardar()"
+            [disabled]="guardando() || !form.nombre.trim()"
+            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {{ guardando() ? 'Guardando…' : editandoId() ? 'Guardar cambios' : 'Crear producto' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

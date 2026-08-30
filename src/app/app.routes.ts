@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, sinSesionGuard } from './core/guards/auth.guard';
+import { authGuard, jefeGuard, sinSesionGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -19,6 +19,7 @@ export const routes: Routes = [
       },
       {
         path: 'inventario',
+        canActivate: [jefeGuard],
         loadComponent: () =>
           import('./features/inventario/inventario.component').then((m) => m.InventarioComponent),
       },
@@ -28,14 +29,17 @@ export const routes: Routes = [
       },
       {
         path: 'compras',
+        canActivate: [jefeGuard],
         loadComponent: () => import('./features/compras/compras.component').then((m) => m.ComprasComponent),
       },
       {
         path: 'mermas',
+        canActivate: [jefeGuard],
         loadComponent: () => import('./features/mermas/mermas.component').then((m) => m.MermasComponent),
       },
       {
         path: 'caja',
+        canActivate: [jefeGuard],
         loadComponent: () => import('./features/caja/caja.component').then((m) => m.CajaComponent),
       },
       {
@@ -44,6 +48,7 @@ export const routes: Routes = [
       },
       {
         path: 'reportes',
+        canActivate: [jefeGuard],
         loadComponent: () => import('./features/reportes/reportes.component').then((m) => m.ReportesComponent),
       },
     ],

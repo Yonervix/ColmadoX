@@ -1,4 +1,240 @@
-<div class="rounded-xl bg-white p-10 text-center shadow-sm">
-  <h1 class="text-2xl font-bold">Vender (Fase 4)</h1>
-  <p class="mt-2 text-slate-500">Punto de venta con contado / fiado, cambio y recibo.</p>
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="space-y-4 lg:col-span-2">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Vender</h1>
+      <input
+        type="search"
+        placeholder="Buscar producto…"
+        [ngModel]="buscando()"
+        (ngModelChange)="buscando.set($event)"
+        name="buscar"
+        class="w-64 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+      />
+    </div>
+
+    @if (error()) {
+      <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+    }
+
+    @if (cargando()) {
+      <p class="text-slate-500">Cargando productos…</p>
+    } @else {
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+        @for (p of productosFiltrados(); track p.id) {
+          <button
+            (click)="agregar(p)"
+            [disabled]="p.stock <= 0"
+            class="group rounded-xl bg-white p-3 text-left shadow-sm transition hover:shadow-md disabled:opacity-40"
+          >
+            <div class="mb-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+              @if (p.foto_url) {
+                <img [src]="p.foto_url" alt="" class="h-full w-full object-cover" />
+              } @else {
+                <span class="text-xs text-slate-400">Sin foto</span>
+              }
+            </div>
+            <p class="truncate text-sm font-semibold">{{ p.nombre }}</p>
+            <p class="text-xs text-slate-400">{{ etiquetaTipo(p.tipo) }}</p>
+            <div class="mt-1 flex items-center justify-between">
+              <span class="text-base font-bold text-emerald-600">${{ p.precio_venta }}</span>
+              <span [class]="p.stock <= (p.stock_minimo || 0) ? 'text-red-500' : 'text-slate-400'" class="text-xs">
+                {{ p.stock }} uds
+              </span>
+            </div>
+          </button>
+        } @empty {
+          <p class="col-span-full text-center text-slate-500">No hay productos que coincidan.</p>
+        }
+      </div>
+    }
+  </section>
+
+  <aside class="space-y-4 lg:sticky lg:top-0 lg:self-start">
+    <div class="rounded-xl bg-white p-5 shadow-sm">
+      <div class="mb-4 flex rounded-xl bg-slate-100 p-1">
+        <button
+          (click)="seleccionarTipo('contado')"
+          [class]="tipo() === 'contado' ? 'bg-emerald-600 text-white' : 'text-slate-600'"
+          class="flex-1 rounded-lg py-2 text-sm font-semibold transition"
+        >
+          Contado
+        </button>
+        <button
+          (click)="seleccionarTipo('fiado')"
+          [class]="tipo() === 'fiado' ? 'bg-emerald-600 text-white' : 'text-slate-600'"
+          class="flex-1 rounded-lg py-2 text-sm font-semibold transition"
+        >
+          Fiado
+        </button>
+      </div>
+
+      @if (tipo() === 'fiado') {
+        <div class="space-y-2">
+          <select
+            [ngModel]="clienteId()"
+            (ngModelChange)="clienteId.set($event)"
+            name="cliente"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:border-emerald-500 focus:outline-none"
+          >
+            <option [ngValue]="null">Selecciona el cliente…</option>
+            @for (c of clientes(); track c.id) {
+              <option [ngValue]="c.id">{{ c.nombre }}</option>
+            }
+          </select>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              [ngModel]="nuevoCliente()"
+              (ngModelChange)="nuevoCliente.set($event)"
+              name="nuevoCliente"
+              placeholder="Cliente nuevo…"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            />
+            <button
+              (click)="crearClienteRapido()"
+              class="shrink-0 rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+            >
+              Agregar
+            </button>
+          </div>
+        </div>
+      }
+
+      <div class="mt-4 max-h-72 space-y-2 overflow-y-auto">
+        @for (linea of carrito(); track linea.producto.id) {
+          <div class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium">{{ linea.producto.nombre }}</p>
+              <p class="text-xs text-slate-500">
+                ${{ linea.producto.precio_venta }} × {{ linea.cantidad }}
+              </p>
+            </div>
+            <div class="flex items-center gap-1">
+              <button
+                (click)="bajar(linea)"
+                class="h-7 w-7 rounded-lg bg-slate-200 text-sm font-bold hover:bg-slate-300"
+              >
+                −
+              </button>
+              <span class="w-6 text-center text-sm font-semibold">{{ linea.cantidad }}</span>
+              <button
+                (click)="subir(linea)"
+                class="h-7 w-7 rounded-lg bg-slate-200 text-sm font-bold hover:bg-slate-300"
+              >
+                +
+              </button>
+            </div>
+            <button
+              (click)="quitar(linea)"
+              class="ml-1 rounded-lg px-1.5 py-1 text-xs text-red-600 hover:bg-red-50"
+            >
+              ✕
+            </button>
+          </div>
+        } @empty {
+          <p class="py-6 text-center text-sm text-slate-400">El carrito está vacío. Toca un producto.</p>
+        }
+      </div>
+
+      <div class="mt-4 space-y-3 border-t border-slate-100 pt-4">
+        <div class="flex items-center justify-between text-sm text-slate-600">
+          <span>Subtotal</span>
+          <span>${{ subtotal() | number: '1.2-2' }}</span>
+        </div>
+        <div class="flex items-center justify-between gap-3 text-sm text-slate-600">
+          <span>Descuento ($)</span>
+          <input
+            type="number"
+            [ngModel]="descuento()"
+            (ngModelChange)="descuento.set($event || 0)"
+            name="descuento"
+            min="0"
+            step="0.01"
+            class="w-24 rounded-lg border border-slate-300 px-2 py-1 text-right focus:border-emerald-500 focus:outline-none"
+          />
+        </div>
+
+        @if (tipo() === 'contado') {
+          <div class="flex items-center justify-between gap-3 text-sm text-slate-600">
+            <span>Cliente paga ($)</span>
+            <input
+              type="number"
+              [ngModel]="pagoCon()"
+              (ngModelChange)="pagoCon.set($event)"
+              name="pagoCon"
+              min="0"
+              step="0.01"
+              placeholder="0"
+              class="w-24 rounded-lg border border-slate-300 px-2 py-1 text-right focus:border-emerald-500 focus:outline-none"
+            />
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-600">Cambio</span>
+            <span class="font-semibold text-emerald-600">${{ cambio() | number: '1.2-2' }}</span>
+          </div>
+        }
+
+        <div class="flex items-center justify-between">
+          <span class="font-semibold">TOTAL</span>
+          <span class="text-2xl font-bold text-slate-900">${{ total() | number: '1.2-2' }}</span>
+        </div>
+
+        <button
+          (click)="cobrar()"
+          [disabled]="cobrando() || carrito().length === 0"
+          class="w-full rounded-xl bg-emerald-600 py-3 text-base font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {{ cobrando() ? 'Cobrando…' : 'Cobrar' }}
+        </button>
+      </div>
+    </div>
+  </aside>
 </div>
+
+@if (recibo(); as venta) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+      <div class="text-center">
+        <p class="text-xl font-bold text-emerald-600">ColmadoX</p>
+        <p class="text-sm text-slate-500">Recibo #{{ recibo()!.venta.numero }}</p>
+        <p class="text-xs text-slate-400">{{ recibo()!.venta.tipo === 'fiado' ? 'A fiado' : 'Contado' }}</p>
+      </div>
+      <div class="my-4 space-y-1 border-t border-dashed border-slate-200 pt-4 text-sm">
+        @for (linea of recibo()?.lineas; track linea.producto.id) {
+          <div class="flex justify-between">
+            <span class="text-slate-600">{{ linea.cantidad }} × {{ linea.producto.nombre }}</span>
+            <span>${{ (linea.cantidad * linea.producto.precio_venta) | number: '1.2-2' }}</span>
+          </div>
+        }
+      </div>
+      <div class="space-y-1 border-t border-dashed border-slate-200 pt-3 text-sm">
+        @if (recibo()!.venta.descuento > 0) {
+          <div class="flex justify-between text-slate-600">
+            <span>Descuento</span>
+            <span>− ${{ recibo()!.venta.descuento | number: '1.2-2' }}</span>
+          </div>
+        }
+        <div class="flex justify-between font-bold">
+          <span>Total</span>
+          <span>${{ recibo()!.venta.total | number: '1.2-2' }}</span>
+        </div>
+        @if (recibo()!.venta.tipo === 'contado') {
+          <div class="flex justify-between text-slate-600">
+            <span>Paga con</span>
+            <span>${{ recibo()!.venta.pago_con | number: '1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between text-emerald-600">
+            <span>Cambio</span>
+            <span>${{ recibo()!.venta.cambio | number: '1.2-2' }}</span>
+          </div>
+        }
+      </div>
+      <button
+        (click)="cerrarRecibo()"
+        class="mt-5 w-full rounded-xl bg-emerald-600 py-2.5 font-bold text-white transition hover:bg-emerald-700"
+      >
+        Nueva venta
+      </button>
+    </div>
+  </div>
+}

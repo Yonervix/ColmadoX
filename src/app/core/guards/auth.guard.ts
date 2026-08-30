@@ -17,3 +17,11 @@ export const sinSesionGuard: CanActivateFn = async () => {
   if (auth.session()) return router.createUrlTree(['/inicio']);
   return true;
 };
+
+export const jefeGuard: CanActivateFn = async () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await auth.listo;
+  if (auth.isJefe()) return true;
+  return router.createUrlTree(['/ventas']);
+};
