@@ -21,20 +21,31 @@
         <p>
           <b>No hay una caja abierta.</b> Sin caja abierta no se puede vender.
         </p>
-        @if (auth.isJefe()) {
-          <button
-            (click)="irACaja()"
-            class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
-          >
-            Ir a Caja
-          </button>
-        }
+        <button
+          (click)="irACaja()"
+          class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+        >
+          Abrir caja
+        </button>
       </div>
     }
 
     @if (cargando()) {
       <p class="text-slate-500">Cargando productos…</p>
     } @else {
+      <div class="flex flex-wrap gap-2">
+        @for (t of tiposFiltro; track t.valor) {
+          <button
+            (click)="filtroTipo.set(t.valor)"
+            [class]="filtroTipo() === t.valor
+              ? 'bg-emerald-600 text-white'
+              : 'bg-white text-slate-600 hover:bg-slate-50'"
+            class="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs font-semibold transition"
+          >
+            {{ t.etiqueta }}
+          </button>
+        }
+      </div>
       <div class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
         @for (p of productosFiltrados(); track p.id) {
           <button
@@ -122,9 +133,12 @@
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-medium">{{ linea.producto.nombre }}</p>
               <p class="text-xs text-slate-500">
-                ${{ linea.producto.precio_venta }} × {{ linea.cantidad }}
+                ${{ linea.producto.precio_venta | number: '1.2-2' }} × {{ linea.cantidad }}
               </p>
             </div>
+            <span class="text-sm font-semibold text-slate-700">
+              ${{ (linea.cantidad * linea.producto.precio_venta) | number: '1.2-2' }}
+            </span>
             <div class="flex items-center gap-1">
               <button
                 (click)="bajar(linea)"
@@ -200,7 +214,7 @@
           [disabled]="cobrando() || carrito().length === 0 || sinCaja()"
           class="w-full rounded-xl bg-emerald-600 py-3 text-base font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
         >
-          {{ cobrando() ? 'Cobrando…' : 'Cobrar' }}
+          {{ cobrando() ? 'Cobrando…' : carrito().length > 0 ? `Cobrar (${carrito().length})` : 'Cobrar' }}
         </button>
       </div>
     </div>

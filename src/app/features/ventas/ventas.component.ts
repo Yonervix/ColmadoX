@@ -9,7 +9,6 @@ import {
   type VentaRegistrada,
 } from './venta.service';
 import type { TipoProducto } from '../inventario/inventario.types';
-import { AuthService } from '../../core/services/auth.service';
 
 interface Linea {
   producto: ProductoVenta;
@@ -24,7 +23,6 @@ interface Linea {
 export class VentasComponent implements OnInit {
   private servicio = inject(VentaService);
   private router = inject(Router);
-  protected auth = inject(AuthService);
 
   protected readonly productos = signal<ProductoVenta[]>([]);
   protected readonly clientes = signal<Cliente[]>([]);
@@ -32,6 +30,7 @@ export class VentasComponent implements OnInit {
   protected readonly cargando = signal(true);
   protected readonly cobrando = signal(false);
   protected readonly buscando = signal('');
+  protected readonly filtroTipo = signal<'todos' | TipoProducto>('todos');
   protected readonly tipo = signal<'contado' | 'fiado'>('contado');
   protected readonly clienteId = signal<string | null>(null);
   protected readonly pagoCon = signal<number | null>(null);
@@ -43,10 +42,21 @@ export class VentasComponent implements OnInit {
 
   protected readonly productosFiltrados = computed(() => {
     const q = this.buscando().toLowerCase().trim();
+    const tipo = this.filtroTipo();
     const lista = this.productos();
-    if (!q) return lista;
-    return lista.filter((p) => p.nombre.toLowerCase().includes(q));
+    return lista.filter((p) => {
+      const coincideQ = !q || p.nombre.toLowerCase().includes(q);
+      const coincideTipo = tipo === 'todos' || p.tipo === tipo;
+      return coincideQ && coincideTipo;
+    });
   });
+
+  protected readonly tiposFiltro: { valor: 'todos' | TipoProducto; etiqueta: string }[] = [
+    { valor: 'todos', etiqueta: 'Todos' },
+    { valor: 'unidad', etiqueta: 'Suelto' },
+    { valor: 'paquete', etiqueta: 'Paquete' },
+    { valor: 'caja', etiqueta: 'Caja' },
+  ];
 
   protected readonly subtotal = computed(() =>
     this.carrito().reduce((acc, l) => acc + l.cantidad * l.producto.precio_venta, 0),

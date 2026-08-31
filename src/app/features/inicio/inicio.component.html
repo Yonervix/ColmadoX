@@ -1,14 +1,105 @@
 <div class="space-y-6">
-  <h1 class="text-2xl font-bold">Inicio</h1>
-  <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-    @for (card of ['Ventas de hoy', 'En caja', 'Deudores', 'Stock bajo']; track card) {
+  <div class="flex flex-col gap-1">
+    <h1 class="text-2xl font-bold">{{ saludo() }}, {{ perfil()?.nombre ?? '…' }}</h1>
+    <p class="text-sm capitalize text-slate-500">{{ fechaLarga() }}</p>
+  </div>
+
+  @if (error()) {
+    <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+  }
+
+  @if (cargando()) {
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      @for (i of [0, 1, 2, 3]; track i) {
+        <div class="h-32 animate-pulse rounded-xl bg-slate-200/70"></div>
+      }
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       <div class="rounded-xl bg-white p-5 shadow-sm">
-        <p class="text-sm text-slate-500">{{ card }}</p>
-        <p class="mt-2 text-2xl font-bold">—</p>
+        <p class="text-sm text-slate-500">
+          {{ auth.isJefe() ? 'Ventas de hoy' : 'Ingresos de hoy' }}
+        </p>
+        <p class="mt-2 text-2xl font-bold text-emerald-600">${{ ventasHoy() | number: '1.2-2' }}</p>
+        @if (auth.isJefe()) {
+          <p class="mt-1 text-xs text-slate-400">
+            {{ ticketsHoy() }} ventas · <span class="text-emerald-600">${{ gananciaHoy() | number: '1.2-2' }} ganancia</span>
+          </p>
+        } @else {
+          <p class="mt-1 text-xs text-slate-400">Contado + cobros de fiado de la caja</p>
+        }
       </div>
-    }
-  </div>
-  <div class="rounded-xl bg-white p-10 text-center shadow-sm">
-    <p class="text-slate-500">El panel principal se construirá cuando existan los datos.</p>
-  </div>
+
+      <button
+        (click)="ir('/caja')"
+        class="rounded-xl bg-white p-5 text-left shadow-sm transition hover:shadow-md"
+      >
+        <p class="text-sm text-slate-500">En caja</p>
+        @if (cajaAbierta()) {
+          <p class="mt-2 text-2xl font-bold">${{ debeHaber() | number: '1.2-2' }}</p>
+          <p class="mt-1 text-xs text-emerald-600">Caja abierta · debe haber en físico</p>
+        } @else {
+          <p class="mt-2 text-2xl font-bold text-amber-500">Sin caja</p>
+          <p class="mt-1 text-xs text-amber-600">Ábrela para poder vender</p>
+        }
+      </button>
+
+      <button
+        (click)="ir('/fiado')"
+        class="rounded-xl bg-white p-5 text-left shadow-sm transition hover:shadow-md"
+      >
+        <p class="text-sm text-slate-500">Deudores</p>
+        <p class="mt-2 text-2xl font-bold text-amber-600">${{ saldoDeudores() | number: '1.2-2' }}</p>
+        <p class="mt-1 text-xs text-slate-400">{{ deudores().length }} personas deben</p>
+      </button>
+
+      <div class="rounded-xl bg-white p-5 shadow-sm">
+        <p class="text-sm text-slate-500">Stock bajo</p>
+        <p class="mt-2 text-2xl font-bold text-red-500">{{ stockBajo().length }}</p>
+        @if (nombreStockBajo()) {
+          <p class="mt-1 truncate text-xs text-slate-400" [title]="nombreStockBajo()">
+            {{ nombreStockBajo() }}
+          </p>
+        } @else {
+          <p class="mt-1 text-xs text-slate-400">Todo con stock suficiente</p>
+        }
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <button
+        (click)="ir('/ventas')"
+        class="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-700"
+      >
+        <app-layout-icon name="vender" /> Vender
+      </button>
+      <button
+        (click)="ir('/caja')"
+        class="flex items-center justify-center gap-2 rounded-xl bg-slate-800 py-3.5 text-sm font-bold text-white transition hover:bg-slate-700"
+      >
+        <app-layout-icon name="caja" /> Caja
+      </button>
+      <button
+        (click)="ir('/fiado')"
+        class="flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 text-sm font-bold text-white transition hover:bg-amber-600"
+      >
+        <app-layout-icon name="fiado" /> Fiado
+      </button>
+      @if (auth.isJefe()) {
+        <button
+          (click)="ir('/reportes')"
+          class="flex items-center justify-center gap-2 rounded-xl bg-sky-600 py-3.5 text-sm font-bold text-white transition hover:bg-sky-700"
+        >
+          <app-layout-icon name="reportes" /> Reportes
+        </button>
+      } @else {
+        <button
+          (click)="ir('/info')"
+          class="flex items-center justify-center gap-2 rounded-xl bg-slate-100 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200"
+        >
+          <app-layout-icon name="info" /> Sobre mí
+        </button>
+      }
+    </div>
+  }
 </div>
