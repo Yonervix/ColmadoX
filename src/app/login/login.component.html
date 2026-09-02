@@ -1,51 +1,115 @@
-<div class="flex min-h-screen items-center justify-center bg-slate-900 p-4">
-  <form
-    (ngSubmit)="entrar()"
-    class="w-full max-w-sm space-y-4 rounded-2xl bg-white p-8 shadow-xl"
+<div class="flex min-h-screen">
+  <div
+    class="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-[#09382a] via-[#05231a] to-[#020d08] p-12 text-slate-100 lg:flex"
   >
-    <div class="text-center">
-      <h1 class="text-2xl font-bold text-emerald-600">ColmadoX</h1>
-      <p class="mt-1 text-sm text-slate-500">Inicia sesión para vender</p>
+    <div class="flex items-center gap-3">
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 font-display text-xl font-extrabold text-white shadow-lg shadow-black/40">
+        C
+      </div>
+      <div>
+        <p class="font-display text-xl font-bold leading-tight">ColmadoX</p>
+        <p class="text-xs text-slate-400">Sistema de gestión de colmado</p>
+      </div>
     </div>
 
-    @if (error()) {
-      <p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error() }}</p>
-    }
-
-    <div>
-      <label class="block text-sm font-medium text-slate-700" for="email">Correo</label>
-      <input
-        id="email"
-        type="email"
-        name="email"
-        [(ngModel)]="email"
-        required
-        autocomplete="username"
-        placeholder="jefe@colmadox.com"
-        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
-      />
+    <div class="space-y-6">
+      <h1 class="font-display text-4xl font-bold leading-tight">
+        Controla tus ventas,<br />
+        inventario y <span class="text-emerald-400">fiados</span> en un solo lugar.
+      </h1>
+      <ul class="space-y-3 text-sm text-slate-300">
+        <li class="flex items-center gap-3">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </span>
+          Punto de venta rápido de contado y fiado
+        </li>
+        <li class="flex items-center gap-3">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </span>
+          Caja diaria con arqueo y gastos
+        </li>
+        <li class="flex items-center gap-3">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </span>
+          Reportes, deudores y stock siempre al día
+        </li>
+      </ul>
     </div>
 
-    <div>
-      <label class="block text-sm font-medium text-slate-700" for="password">Contraseña</label>
-      <input
-        id="password"
-        type="password"
-        name="password"
-        [(ngModel)]="password"
-        required
-        autocomplete="current-password"
-        placeholder="••••••••"
-        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
-      />
-    </div>
+    <p class="text-xs text-slate-500">© 2026 ColmadoX</p>
+  </div>
 
-    <button
-      type="submit"
-      [disabled]="cargando()"
-      class="w-full rounded-lg bg-emerald-600 py-2.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+  <div class="flex flex-1 items-center justify-center bg-gradient-to-br from-[#f5f8f6] via-slate-100 to-emerald-50 p-6">
+    <form
+      (ngSubmit)="entrar()"
+      class="w-full max-w-sm space-y-5 rounded-3xl bg-white/90 p-8 shadow-card ring-1 ring-slate-900/5 backdrop-blur"
     >
-      {{ cargando() ? 'Entrando…' : 'Entrar' }}
-    </button>
-  </form>
+      <div class="text-center lg:hidden">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 font-display text-2xl font-extrabold text-white shadow-lg">
+          C
+        </div>
+        <h1 class="mt-3 font-display text-2xl font-bold text-slate-900">ColmadoX</h1>
+        <p class="mt-1 text-sm text-slate-500">Inicia sesión para vender</p>
+      </div>
+
+      <div class="hidden text-center lg:block">
+        <h1 class="font-display text-2xl font-bold text-slate-900">Bienvenido de nuevo</h1>
+        <p class="mt-1 text-sm text-slate-500">Inicia sesión para continuar</p>
+      </div>
+
+      @if (error()) {
+        <div class="flex items-start gap-2 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 ring-1 ring-red-100">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="mt-0.5 h-4 w-4 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          {{ error() }}
+        </div>
+      }
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700" for="email">Correo</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          required
+          autocomplete="username"
+          placeholder="jefe@colmadox.com"
+          class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700" for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          required
+          autocomplete="current-password"
+          placeholder="••••••••"
+          class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm shadow-sm transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 focus:outline-none"
+        />
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="cargando()"
+        class="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 py-3 font-display text-sm font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:from-emerald-700 hover:to-emerald-600 hover:shadow-emerald-600/30 active:scale-[0.99] disabled:opacity-50"
+      >
+        {{ cargando() ? 'Entrando…' : 'Entrar' }}
+      </button>
+    </form>
+  </div>
 </div>

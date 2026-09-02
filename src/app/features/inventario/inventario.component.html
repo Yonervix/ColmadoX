@@ -12,6 +12,24 @@
     </button>
   </div>
 
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div class="relative max-w-md flex-1">
+      <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+        </svg>
+      </span>
+      <input
+        type="search"
+        placeholder="Buscar por nombre o categoría…"
+        [value]="buscando()"
+        (input)="buscando.set(($any($event.target).value))"
+        class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm shadow-sm outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+      />
+    </div>
+    <p class="text-sm text-slate-500">{{ grupos().length }} categoría(s) · {{ productos().length }} productos</p>
+  </div>
+
   @if (error()) {
     <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
   }
@@ -38,59 +56,74 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          @for (p of productos(); track p.id) {
-            <tr class="hover:bg-slate-50">
-              <td class="px-4 py-3">
-                @if (p.foto_url) {
-                  <img [src]="p.foto_url" alt="" class="h-10 w-10 rounded-lg object-cover" />
-                } @else {
-                  <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
-                    Sin foto
-                  </div>
-                }
-              </td>
-              <td class="px-4 py-3">
-                <p class="font-medium">{{ p.nombre }}</p>
-                <p class="text-xs text-slate-400">{{ p.categorias?.nombre ?? 'Sin categoría' }}</p>
-              </td>
-              <td class="px-4 py-3">{{ etiquetaTipo(p.tipo) }}</td>
-              <td class="px-4 py-3">
-                <span
-                  [class]="stockBajo(p)
-                    ? 'rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700'
-                    : 'rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-700'"
-                >
-                  {{ p.stock }}
-                </span>
-                @if (stockBajo(p)) {
-                  <span class="ml-1 text-xs text-red-600">bajo</span>
-                }
-              </td>
-              <td class="px-4 py-3 text-slate-500">${{ p.precio_compra }}</td>
-              <td class="px-4 py-3 font-semibold">${{ p.precio_venta }}</td>
-              <td class="px-4 py-3">
-                <span
-                  [class]="margen(p) >= 30 ? 'text-emerald-600' : margen(p) >= 15 ? 'text-amber-600' : 'text-red-600'"
-                  class="font-semibold"
-                >
-                  {{ margen(p) | number: '1.0-1' }}%
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <button
-                  (click)="abrirEditar(p)"
-                  class="rounded-lg px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
-                >
-                  Editar
-                </button>
-                <button
-                  (click)="desactivar(p)"
-                  class="rounded-lg px-3 py-1 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  Quitar
-                </button>
-              </td>
-            </tr>
+      @for (grupo of grupos(); track grupo.categoria; let g = $index) {
+              <tr class="bg-emerald-50/70">
+                <th colspan="8" class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-800">
+                  {{ grupo.categoria }}
+                  <span class="ml-1.5 rounded-full bg-emerald-600/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                    {{ grupo.productos.length }}
+                  </span>
+                </th>
+              </tr>
+              @for (p of grupo.productos; track p.id) {
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3">
+                    @if (p.foto_url) {
+                      <img [src]="p.foto_url" alt="" class="h-10 w-10 rounded-lg object-cover" />
+                    } @else {
+                      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
+                        Sin foto
+                      </div>
+                    }
+                  </td>
+                  <td class="px-4 py-3">
+                    <p class="font-medium">{{ p.nombre }}</p>
+                    <p class="text-xs text-slate-400">{{ p.categorias?.nombre ?? 'Sin categoría' }}</p>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ etiquetaTipo(p) }}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      [class]="stockBajo(p)
+                        ? 'rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700'
+                        : 'rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-700'"
+                    >
+                      {{ p.stock }} {{ unidadStock(p) }}
+                    </span>
+                    @if (stockBajo(p)) {
+                      <span class="ml-1 text-xs text-red-600">bajo</span>
+                    }
+                    @if (esSinConteo(p)) {
+                      <p class="mt-1 text-xs text-slate-400">Se agota desde Mermas</p>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-slate-500">${{ p.precio_compra }}</td>
+                  <td class="px-4 py-3 font-semibold">${{ p.precio_venta }}</td>
+                  <td class="px-4 py-3">
+                    <span
+                      [class]="margen(p) >= 30 ? 'text-emerald-600' : margen(p) >= 15 ? 'text-amber-600' : 'text-red-600'"
+                      class="font-semibold"
+                    >
+                      {{ margen(p) | number: '1.0-1' }}%
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <button
+                      (click)="abrirEditar(p)"
+                      class="rounded-lg px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      (click)="desactivar(p)"
+                      class="rounded-lg px-3 py-1 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                    >
+                      Quitar
+                    </button>
+                  </td>
+                </tr>
+              }
           }
         </tbody>
       </table>
@@ -170,6 +203,29 @@
             </div>
           </div>
         </div>
+
+        @if (form.tipo !== 'unidad') {
+          <div class="rounded-lg bg-emerald-50/60 p-3">
+            <label class="block text-sm font-medium text-slate-700" for="unidadesPorPaquete">
+              Unidades que trae cada {{ form.tipo === 'caja' ? 'caja' : 'paquete' }}
+            </label>
+            <input
+              id="unidadesPorPaquete"
+              type="number"
+              [(ngModel)]="form.unidades_por_paquete"
+              name="unidadesPorPaquete"
+              min="0"
+              placeholder="Ej. 13"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            />
+            <p class="mt-1.5 text-xs leading-relaxed text-slate-500">
+              <span class="font-semibold text-emerald-700">Con conteo (ej. yogurt = 13):</span> al comprar 1 paquete se suman
+              13 unidades y se venden unidades normales.
+              <span class="font-semibold text-emerald-700">Sin conteo (ej. menta, vacío):</span> compras paquetes, vendes
+              varias veces sin descontar y cuando se acaba un paquete lo marcas desde Mermas.
+            </p>
+          </div>
+        }
 
         <div class="flex gap-2">
           <input

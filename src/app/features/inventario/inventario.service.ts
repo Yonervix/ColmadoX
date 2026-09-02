@@ -33,6 +33,7 @@ export class InventarioService {
       .from('productos')
       .select('*, categorias(nombre)')
       .eq('activo', true)
+      .order('nombre', { referencedTable: 'categorias' })
       .order('nombre');
     if (error) throw new Error(error.message);
     return (data ?? []) as Producto[];

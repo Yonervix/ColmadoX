@@ -24,6 +24,7 @@ create table public.productos (
   nombre text not null,
   categoria_id bigint references public.categorias on delete set null,
   tipo producto_tipo not null default 'unidad',
+  unidades_por_paquete numeric(10,2),
   foto_url text,
   stock integer not null default 0,
   stock_minimo integer not null default 0,
@@ -35,6 +36,8 @@ create table public.productos (
 );
 
 create index idx_productos_nombre on public.productos (nombre);
+
+alter table public.productos add column if not exists unidades_por_paquete numeric(10,2);
 
 create table public.movimientos_stock (
   id bigint generated always as identity primary key,
@@ -321,7 +324,7 @@ group by c.id, c.nombre, c.telefono;
 create or replace view public.productos_venta
 with (security_invoker = true)
 as
-select id, nombre, tipo, foto_url, stock, stock_minimo, precio_venta
+select id, nombre, tipo, foto_url, stock, stock_minimo, precio_venta, unidades_por_paquete
 from public.productos
 where activo = true;
 
@@ -342,6 +345,8 @@ declare
   v_precio numeric(10,2);
   v_total numeric(10,2) := 0;
   v_stock_actual integer;
+  v_tipo text;
+  v_por_paquete numeric(10,2);
   v_caja_id uuid;
 begin
   if auth.uid() is null then
@@ -376,12 +381,16 @@ begin
       raise exception 'Las cantidades deben ser positivas';
     end if;
 
-    select stock into v_stock_actual from public.productos where id = v_producto_id;
+    select stock, tipo, unidades_por_paquete into v_stock_actual, v_tipo, v_por_paquete
+    from public.productos where id = v_producto_id;
     if v_stock_actual is null then
       raise exception 'Producto no encontrado';
     end if;
-    if v_stock_actual < v_cantidad then
-      raise exception 'Stock insuficiente para uno de los productos';
+
+    if not (v_tipo in ('paquete', 'caja') and coalesce(v_por_paquete, 0) <= 0) then
+      if v_stock_actual < v_cantidad then
+        raise exception 'Stock insuficiente para uno de los productos';
+      end if;
     end if;
 
     select precio_venta into v_precio from public.productos where id = v_producto_id;
@@ -412,13 +421,18 @@ begin
     insert into public.venta_items (venta_id, producto_id, cantidad, precio_venta, subtotal)
     values (v_venta.id, v_producto_id, v_cantidad, v_precio, v_precio * v_cantidad);
 
-    update public.productos
-    set stock = stock - v_cantidad,
-        updated_at = now()
-    where id = v_producto_id;
+    select tipo, unidades_por_paquete into v_tipo, v_por_paquete
+    from public.productos where id = v_producto_id;
 
-    insert into public.movimientos_stock (producto_id, concepto, cantidad, referencia, created_by)
-    values (v_producto_id, 'venta', v_cantidad, v_venta.id, auth.uid());
+    if not (v_tipo in ('paquete', 'caja') and coalesce(v_por_paquete, 0) <= 0) then
+      update public.productos
+      set stock = stock - v_cantidad,
+          updated_at = now()
+      where id = v_producto_id;
+
+      insert into public.movimientos_stock (producto_id, concepto, cantidad, referencia, created_by)
+      values (v_producto_id, 'venta', v_cantidad, v_venta.id, auth.uid());
+    end if;
   end loop;
 
   return v_venta;
@@ -1108,6 +1122,7 @@ declare
   v_producto_id uuid;
   v_cantidad integer;
   v_costo numeric(10,2);
+  v_por_paquete numeric(10,2);
   v_total numeric(10,2) := 0;
 begin
   if not public.is_jefe() then
@@ -1134,17 +1149,24 @@ begin
     v_cantidad := (v_item->>'cantidad')::int;
     v_costo := (v_item->>'costo_unitario')::numeric;
 
+    select unidades_por_paquete into v_por_paquete
+    from public.productos where id = v_producto_id;
+    v_por_paquete := coalesce(v_por_paquete, 0);
+    if v_por_paquete <= 0 then
+      v_por_paquete := 1;
+    end if;
+
     insert into public.compra_items (compra_id, producto_id, cantidad, costo_unitario)
     values (v_compra_id, v_producto_id, v_cantidad, v_costo);
 
     update public.productos
-    set stock = stock + v_cantidad,
+    set stock = stock + (v_cantidad * v_por_paquete)::int,
         precio_compra = v_costo,
         updated_at = now()
     where id = v_producto_id;
 
     insert into public.movimientos_stock (producto_id, concepto, cantidad, referencia, created_by)
-    values (v_producto_id, 'compra', v_cantidad, v_compra_id, auth.uid());
+    values (v_producto_id, 'compra', (v_cantidad * v_por_paquete)::int, v_compra_id, auth.uid());
   end loop;
 
   return v_compra_id;

@@ -50,8 +50,9 @@
         @for (p of productosFiltrados(); track p.id) {
           <button
             (click)="agregar(p)"
-            [disabled]="p.stock <= 0"
-            class="group rounded-xl bg-white p-3 text-left shadow-sm transition hover:shadow-md disabled:opacity-40"
+            [disabled]="!esSinConteo(p) && p.stock <= 0"
+            [class]="!esSinConteo(p) && p.stock <= 0 ? 'opacity-40' : ''"
+            class="group rounded-xl bg-white p-3 text-left shadow-sm transition hover:shadow-md disabled:cursor-default"
           >
             <div class="mb-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-lg bg-slate-100">
               @if (p.foto_url) {
@@ -61,11 +62,16 @@
               }
             </div>
             <p class="truncate text-sm font-semibold">{{ p.nombre }}</p>
-            <p class="text-xs text-slate-400">{{ etiquetaTipo(p.tipo) }}</p>
+            <p class="text-xs text-slate-400">
+              {{ etiquetaTipo(p.tipo) }}
+              @if (esSinConteo(p)) {
+                <span class="text-amber-500">· sin conteo</span>
+              }
+            </p>
             <div class="mt-1 flex items-center justify-between">
               <span class="text-base font-bold text-emerald-600">${{ p.precio_venta }}</span>
-              <span [class]="p.stock <= (p.stock_minimo || 0) ? 'text-red-500' : 'text-slate-400'" class="text-xs">
-                {{ p.stock }} uds
+              <span [class]="!esSinConteo(p) && p.stock <= (p.stock_minimo || 0) ? 'text-red-500' : 'text-slate-400'" class="text-xs">
+                {{ stockLegible(p) }}
               </span>
             </div>
           </button>

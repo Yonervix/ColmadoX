@@ -25,7 +25,7 @@ export class MermasComponent implements OnInit {
   protected productoId = '';
   protected cantidad = 1;
   protected motivo = 'Vencido';
-  protected readonly motivos = ['Vencido', 'Roto', 'Perdido', 'Robo', 'Otro'];
+  protected readonly motivos = ['Vencido', 'Roto', 'Perdido', 'Robo', 'Se acabó el paquete', 'Otro'];
 
   protected conteoId = '';
   protected conteoItems = signal<ItemConteo[]>([]);

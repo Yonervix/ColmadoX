@@ -98,11 +98,11 @@ export class VentasComponent implements OnInit {
     const actual = this.carrito();
     const linea = actual.find((l) => l.producto.id === p.id);
     if (linea) {
-      if (linea.cantidad >= p.stock) {
+      if (!this.esSinConteo(p) && linea.cantidad >= p.stock) {
         this.error.set(`No hay más stock de "${p.nombre}".`);
         return;
       }
-      linea.cantidad++;
+      if (!this.esSinConteo(p) || linea.cantidad < 999) linea.cantidad++;
       this.carrito.set([...actual]);
     } else {
       this.carrito.set([...actual, { producto: p, cantidad: 1 }]);
@@ -112,10 +112,12 @@ export class VentasComponent implements OnInit {
 
   protected subir(linea: Linea) {
     const actual = this.carrito();
-    if (linea.cantidad >= linea.producto.stock) {
-      this.error.set(`No hay más stock de "${linea.producto.nombre}".`);
+    const p = linea.producto;
+    if (!this.esSinConteo(p) && linea.cantidad >= p.stock) {
+      this.error.set(`No hay más stock de "${p.nombre}".`);
       return;
     }
+    if (this.esSinConteo(p) && linea.cantidad >= 999) return;
     linea.cantidad++;
     this.carrito.set([...actual]);
   }
@@ -212,5 +214,14 @@ export class VentasComponent implements OnInit {
 
   protected etiquetaTipo(t: TipoProducto): string {
     return { unidad: 'Suelto', paquete: 'Paquete', caja: 'Caja' }[t] ?? '';
+  }
+
+  protected esSinConteo(p: ProductoVenta): boolean {
+    return p.tipo !== 'unidad' && !(p.unidades_por_paquete && p.unidades_por_paquete > 0);
+  }
+
+  protected stockLegible(p: ProductoVenta): string {
+    if (this.esSinConteo(p)) return `${p.stock} ${p.tipo === 'caja' ? 'cajas' : 'paq'}`;
+    return `${p.stock} uds`;
   }
 }

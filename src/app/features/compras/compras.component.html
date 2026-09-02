@@ -36,8 +36,9 @@
     </div>
 
     <p class="mb-2 text-xs text-slate-400">
-      Sugerencia: el costo se captura por unidad de venta. Si compras una caja de 12 refrescos a 300, pon
-      cantidad 12 y costo por unidad 25.
+      El costo se captura por unidad de venta. Para paquetes con conteo (ej. yogurt = 13) pon la cantidad de
+      paquetes: el stock sumará solo (1 paquete = 13 unidades). Los paquetes sin conteo (ej. menta) suman
+      paquetes y se agotan desde Mermas.
     </p>
 
     <div class="space-y-2">
@@ -52,7 +53,7 @@
             <option value="">Selecciona producto…</option>
             @for (p of productos(); track p.id) {
               <option [ngValue]="p.id">
-                {{ p.nombre }} ({{ etiquetaTipo(p.tipo) }})
+                {{ p.nombre }} ({{ infoProducto(p) }})
               </option>
             }
           </select>

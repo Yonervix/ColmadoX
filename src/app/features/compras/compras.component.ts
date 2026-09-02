@@ -93,6 +93,15 @@ export class ComprasComponent implements OnInit {
     return { unidad: 'Suelto', paquete: 'Paquete', caja: 'Caja' }[t] ?? '—';
   }
 
+  protected infoProducto(p: Producto): string {
+    const base = this.etiquetaTipo(p.tipo);
+    if (p.tipo !== 'unidad' && p.unidades_por_paquete && p.unidades_por_paquete > 0) {
+      return `${base}, ${p.unidades_por_paquete} c/u`;
+    }
+    if (p.tipo !== 'unidad') return `${base} sin conteo`;
+    return base;
+  }
+
   private itemVacio(): ItemCompra {
     return { producto_id: '', nombre: '', cantidad: 1, costo_unitario: 0 };
   }

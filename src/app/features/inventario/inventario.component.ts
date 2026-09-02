@@ -1,8 +1,8 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventarioService } from './inventario.service';
-import type { Categoria, Producto, ProductoForm, TipoProducto } from './inventario.types';
+import type { Categoria, Producto, ProductoForm } from './inventario.types';
 
 @Component({
   selector: 'app-inventario',
@@ -20,6 +20,30 @@ export class InventarioComponent implements OnInit {
   protected readonly modalAbierto = signal(false);
   protected readonly editandoId = signal<string | null>(null);
   protected readonly fotoPreview = signal<string | null>(null);
+  protected readonly buscando = signal('');
+
+  protected readonly grupos = computed(() => {
+    const texto = this.buscando().trim().toLowerCase();
+    const porCat = new Map<string, Producto[]>();
+    for (const p of this.productos()) {
+      if (texto) {
+        const coincide =
+          p.nombre.toLowerCase().includes(texto) ||
+          (p.categorias?.nombre ?? '').toLowerCase().includes(texto);
+        if (!coincide) continue;
+      }
+      const clave = p.categorias?.nombre ?? 'Sin categoría';
+      const lista = porCat.get(clave) ?? [];
+      lista.push(p);
+      porCat.set(clave, lista);
+    }
+    return [...porCat.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0], 'es'))
+      .map(([categoria, productos]) => ({
+        categoria,
+        productos: [...productos].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
+      }));
+  });
 
   protected form: ProductoForm = this.formVacio();
   protected nuevaCategoria = '';
@@ -68,8 +92,21 @@ export class InventarioComponent implements OnInit {
     return p.stock_minimo > 0 && p.stock <= p.stock_minimo;
   }
 
-  protected etiquetaTipo(t: TipoProducto): string {
-    return { unidad: 'Suelto', paquete: 'Paquete', caja: 'Caja' }[t];
+  protected etiquetaTipo(p: Producto): string {
+    const base = { unidad: 'Suelto', paquete: 'Paquete', caja: 'Caja' }[p.tipo];
+    if (p.tipo !== 'unidad' && p.unidades_por_paquete && p.unidades_por_paquete > 0) {
+      return `${base} · ${p.unidades_por_paquete} c/u`;
+    }
+    if (p.tipo !== 'unidad') return base + ' · sin conteo';
+    return base;
+  }
+
+  protected esSinConteo(p: Producto): boolean {
+    return p.tipo !== 'unidad' && !(p.unidades_por_paquete && p.unidades_por_paquete > 0);
+  }
+
+  protected unidadStock(p: Producto): string {
+    return this.esSinConteo(p) ? (p.tipo === 'caja' ? 'cajas' : 'paq') : 'uds';
   }
 
   protected abrirNuevo() {
@@ -86,6 +123,7 @@ export class InventarioComponent implements OnInit {
       nombre: p.nombre,
       categoria_id: p.categoria_id,
       tipo: p.tipo,
+      unidades_por_paquete: p.unidades_por_paquete,
       stock: p.stock,
       stock_minimo: p.stock_minimo,
       precio_compra: Number(p.precio_compra),
@@ -127,13 +165,18 @@ export class InventarioComponent implements OnInit {
     if (!this.form.nombre.trim()) return;
     this.guardando.set(true);
     this.error.set('');
+    const datos: ProductoForm = {
+      ...this.form,
+      unidades_por_paquete:
+        this.form.tipo === 'unidad' ? null : (this.form.unidades_por_paquete || null),
+    };
     try {
       if (this.editandoId()) {
         const id = this.editandoId()!;
-        await this.servicio.actualizarProducto(id, { ...this.form });
+        await this.servicio.actualizarProducto(id, datos);
         if (this.fotoFile) await this.servicio.subirFoto(this.fotoFile, id);
       } else {
-        const creado = await this.servicio.crearProducto({ ...this.form });
+        const creado = await this.servicio.crearProducto(datos);
         if (this.fotoFile) await this.servicio.subirFoto(this.fotoFile, creado.id);
       }
       this.cerrarModal();
@@ -156,6 +199,7 @@ export class InventarioComponent implements OnInit {
       nombre: '',
       categoria_id: null,
       tipo: 'unidad',
+      unidades_por_paquete: null,
       stock: 0,
       stock_minimo: 0,
       precio_compra: 0,

@@ -6,6 +6,7 @@ export interface ProductoVenta {
   id: string;
   nombre: string;
   tipo: TipoProducto;
+  unidades_por_paquete: number | null;
   foto_url: string | null;
   stock: number;
   stock_minimo: number;
