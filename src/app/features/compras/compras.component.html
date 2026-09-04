@@ -18,8 +18,8 @@
     <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
   }
 
-  <div class="rounded-xl bg-white p-6 shadow-sm">
-    <h2 class="mb-4 text-lg font-bold">Comprar al proveedor</h2>
+  <div class="card-pad">
+    <h2 class="mb-4 font-display text-lg font-semibold tracking-tight">Comprar al proveedor</h2>
 
     <div class="mb-4 flex items-end gap-3">
       <div class="flex-1">
@@ -108,7 +108,7 @@
   </div>
 
   @if (historialAbierto()) {
-    <div class="overflow-x-auto rounded-xl bg-white shadow-sm">
+    <div class="card overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
           <tr>

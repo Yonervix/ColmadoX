@@ -4,7 +4,7 @@
     <p class="text-sm text-slate-500">Ventas, ganancias y gastos por período. Exportable a CSV.</p>
   </div>
 
-  <div class="inline-flex flex-wrap gap-1 rounded-xl bg-slate-200 p-1">
+  <div class="inline-flex flex-wrap gap-1 rounded-xl bg-stone-100 p-1 ring-1 ring-stone-200/80">
     @for (p of periodos; track p.key) {
       <button
         (click)="cargar(p.key)"
@@ -26,28 +26,28 @@
     @let r = resumen();
     @if (r) {
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Ventas</p>
           <p class="text-lg font-bold">${{ r.ventas | number: '1.2-2' }}</p>
           <p class="text-xs text-slate-500">{{ r.tickets }} tickets</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Ganancia de ventas</p>
           <p class="text-lg font-bold text-emerald-600">${{ r.ganancia | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Gastos</p>
           <p class="text-lg font-bold text-red-600">${{ r.gastos | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Costo de mermas</p>
           <p class="text-lg font-bold text-red-600">${{ r.mermas_costo | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Cobros de fiado</p>
           <p class="text-lg font-bold text-emerald-600">${{ r.cobros_fiado | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Ganancia neta*</p>
           <p class="text-lg font-bold text-indigo-600">${{ r.ganancia - r.gastos - r.mermas_costo | number: '1.2-2' }}</p>
           <p class="text-xs text-slate-400">ventas − gastos − mermas</p>
@@ -55,9 +55,9 @@
       </div>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="rounded-xl bg-white p-6 shadow-sm lg:col-span-2">
+        <div class="card-pad lg:col-span-2">
           <div class="mb-4 flex items-center justify-between">
-            <h2 class="font-semibold">Ventas por día</h2>
+            <h2 class="font-display text-lg font-semibold tracking-tight">Ventas por día</h2>
             <span class="text-xs text-slate-500">{{ rangoLabel() }}</span>
           </div>
           @if (r.por_dia.length === 0) {
@@ -83,8 +83,8 @@
           }
         </div>
 
-        <div class="rounded-xl bg-white p-6 shadow-sm">
-          <h2 class="mb-4 font-semibold">Más vendidos</h2>
+        <div class="card-pad">
+          <h2 class="mb-4 font-display text-lg font-semibold tracking-tight">Más vendidos</h2>
           @if (r.top.length === 0) {
             <p class="text-sm text-slate-500">Sin datos.</p>
           } @else {
@@ -117,9 +117,9 @@
         </div>
       </div>
 
-      <div class="rounded-xl bg-white p-6 shadow-sm">
+      <div class="card-pad">
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="font-semibold">Detalle de ventas ({{ ventas().length }})</h2>
+          <h2 class="font-display text-lg font-semibold tracking-tight">Detalle de ventas ({{ ventas().length }})</h2>
           <button
             (click)="exportarCSV()"
             [disabled]="exportando() || ventas().length === 0"

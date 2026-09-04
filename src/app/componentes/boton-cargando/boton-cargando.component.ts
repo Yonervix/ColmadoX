@@ -24,6 +24,6 @@ export class BotonCargandoComponent {
   readonly disabled = input<boolean>(false);
   readonly textoCargando = input<string>('Procesando...');
   readonly clasesBase = input<string>(
-    'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50'
+    'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50'
   );
 }

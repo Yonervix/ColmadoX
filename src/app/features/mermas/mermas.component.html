@@ -8,7 +8,7 @@
     <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
   }
 
-  <div class="inline-flex rounded-xl bg-slate-200 p-1">
+  <div class="inline-flex rounded-xl bg-stone-100 p-1 ring-1 ring-stone-200/80">
     <button
       (click)="cambiarPestana('mermas')"
       [class]="pestana() === 'mermas' ? 'bg-white font-semibold text-emerald-700 shadow-sm' : 'text-slate-600'"
@@ -27,7 +27,7 @@
 
   @if (pestana() === 'mermas') {
     <div class="space-y-4">
-      <div class="rounded-xl bg-white p-6 shadow-sm">
+      <div class="card-pad">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label class="block text-sm font-medium text-slate-700" for="producto">Producto</label>
@@ -83,7 +83,7 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto rounded-xl bg-white shadow-sm">
+      <div class="card overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>
@@ -123,7 +123,7 @@
   }
 
   @if (pestana() === 'conteo') {
-    <div class="rounded-xl bg-white p-6 shadow-sm">
+    <div class="card-pad">
       @if (!creadoConteo()) {
         <div class="text-center">
           <p class="mb-4 text-slate-600">

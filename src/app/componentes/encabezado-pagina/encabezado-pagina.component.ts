@@ -5,12 +5,12 @@ import { BotonVolverComponent } from '../boton-volver/boton-volver.component';
   selector: 'app-encabezado-pagina',
   imports: [BotonVolverComponent],
   template: `
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="space-y-1">
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div class="space-y-2">
         <app-boton-volver />
-        <h1 class="text-2xl font-bold text-slate-900">{{ titulo() }}</h1>
+        <h1 class="font-display text-3xl font-semibold tracking-tight text-stone-900">{{ titulo() }}</h1>
         @if (subtitulo()) {
-          <p class="text-sm text-slate-500">{{ subtitulo() }}</p>
+          <p class="max-w-2xl text-sm text-stone-500">{{ subtitulo() }}</p>
         }
       </div>
       @if (conAcciones()) {

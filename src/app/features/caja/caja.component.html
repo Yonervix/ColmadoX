@@ -39,7 +39,7 @@
         </div>
       }
 
-      <div class="rounded-xl bg-white p-6 shadow-sm">
+      <div class="card-pad">
         <p class="mb-4 text-slate-600">
           {{ r?.caja?.estado === 'cerrada' ? 'Abre una nueva caja cuando quieras seguir vendiendo:' : 'Aún no has abierto la caja de hoy. Indica el fondo inicial:' }}
         </p>
@@ -65,28 +65,28 @@
 
     @if (abierta) {
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Fondo inicial</p>
           <p class="text-lg font-bold">${{ r!.caja!.fondo_inicial | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Ventas contado</p>
           <p class="text-lg font-bold text-emerald-600">${{ r!.ventas_contado | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Cobros fiado</p>
           <p class="text-lg font-bold text-emerald-600">${{ r!.cobros_fiado | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Gastos de esta caja</p>
           <p class="text-lg font-bold text-red-600">${{ r!.gastos | number: '1.2-2' }}</p>
         </div>
-        <div class="rounded-xl bg-white p-4 shadow-sm">
+        <div class="card p-4">
           <p class="text-xs uppercase text-slate-500">Debe haber en físico</p>
           <p class="text-lg font-bold">${{ r!.esperado | number: '1.2-2' }}</p>
         </div>
         @if (auth.isJefe()) {
-          <div class="rounded-xl bg-white p-4 shadow-sm">
+          <div class="card p-4">
             <p class="text-xs uppercase text-slate-500">Ganancia total</p>
             <p class="text-lg font-bold text-indigo-600">${{ r!.ganancia | number: '1.2-2' }}</p>
           </div>
@@ -94,8 +94,8 @@
       </div>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div class="rounded-xl bg-white p-6 shadow-sm">
-          <h2 class="mb-4 font-semibold">Gastos de esta caja</h2>
+        <div class="card-pad">
+          <h2 class="mb-4 font-display text-lg font-semibold tracking-tight">Gastos de esta caja</h2>
           <div class="space-y-2">
             <input
               type="text"
@@ -135,8 +135,8 @@
           </ul>
         </div>
 
-        <div class="rounded-xl bg-white p-6 shadow-sm">
-          <h2 class="mb-4 font-semibold">Ventas de esta caja</h2>
+        <div class="card-pad">
+          <h2 class="mb-4 font-display text-lg font-semibold tracking-tight">Ventas de esta caja</h2>
           <ul class="max-h-72 divide-y divide-slate-100 overflow-y-auto text-sm">
             @for (v of ventas(); track v.id) {
               <li class="flex items-center justify-between gap-2 py-2">
@@ -173,8 +173,8 @@
           </ul>
         </div>
 
-        <div class="rounded-xl bg-white p-6 shadow-sm">
-          <h2 class="mb-4 font-semibold">Cerrar caja</h2>
+        <div class="card-pad">
+          <h2 class="mb-4 font-display text-lg font-semibold tracking-tight">Cerrar caja</h2>
           <p class="mb-3 text-sm text-slate-600">
             Al cerrar, la caja y sus ventas quedan guardadas como historial.
           </p>
@@ -190,8 +190,8 @@
     }
 
     @if (auth.isJefe()) {
-      <div class="rounded-xl bg-white p-6 shadow-sm">
-        <h2 class="mb-4 font-semibold">Historial de cajas</h2>
+      <div class="card-pad">
+        <h2 class="mb-4 font-display text-lg font-semibold tracking-tight">Historial de cajas</h2>
         @if (cajasCerradas().length === 0) {
           <p class="text-sm text-slate-500">Aún no hay cajas cerradas.</p>
         } @else {
@@ -289,7 +289,7 @@
 
   @if (ventaAnular(); as venta) {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="cerrarModalAnular()">
-      <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+      <div class="w-full max-w-sm rounded-3xl border border-stone-200/60 bg-white p-6 shadow-lift" (click)="$event.stopPropagation()">
         <h2 class="text-xl font-bold text-red-600">Anular venta #{{ venta.numero }}</h2>
         <p class="mt-1 text-sm text-slate-600">
           {{ venta.cliente ?? (venta.tipo === 'fiado' ? 'A fiado' : 'Contado') }} · Total
@@ -328,7 +328,7 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
       (click)="cerrarModal()"
     >
-      <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
+      <div class="w-full max-w-md rounded-3xl border border-stone-200/60 bg-white p-6 shadow-lift" (click)="$event.stopPropagation()">
         <h2 class="text-xl font-bold">Cerrar caja</h2>
         <p class="mt-1 text-sm text-slate-500">Revisa el arqueo antes de cerrar.</p>
 
