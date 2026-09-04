@@ -1,12 +1,13 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 import { CajaService, type CajaHistoria, type Gasto, type ResumenCaja, type VentaDia } from './caja.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-caja',
-  imports: [FormsModule, DatePipe, DecimalPipe],
+  imports: [FormsModule, DatePipe, DecimalPipe, EncabezadoPaginaComponent],
   templateUrl: './caja.component.html',
 })
 export class CajaComponent implements OnInit {

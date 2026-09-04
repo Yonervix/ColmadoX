@@ -1,8 +1,8 @@
 <div class="grid gap-6 lg:grid-cols-3">
   <section class="space-y-4 lg:col-span-2">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Vender</h1>
+    <app-encabezado-pagina titulo="Vender" [conAcciones]="true">
       <input
+        acciones
         type="search"
         placeholder="Buscar producto…"
         [ngModel]="buscando()"
@@ -10,7 +10,7 @@
         name="buscar"
         class="w-64 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
       />
-    </div>
+    </app-encabezado-pagina>
 
     @if (error()) {
       <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>

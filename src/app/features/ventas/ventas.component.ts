@@ -2,6 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 import {
   VentaService,
   type Cliente,
@@ -17,7 +18,7 @@ interface Linea {
 
 @Component({
   selector: 'app-ventas',
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, EncabezadoPaginaComponent],
   templateUrl: './ventas.component.html',
 })
 export class VentasComponent implements OnInit {
