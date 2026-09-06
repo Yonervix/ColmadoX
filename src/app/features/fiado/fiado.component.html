@@ -1,8 +1,5 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Fiado</h1>
-    <p class="text-sm text-slate-500">Deudores, abonos e historial por cliente.</p>
-  </div>
+  <app-encabezado-pagina titulo="Fiado" subtitulo="Deudores, abonos e historial por cliente." />
 
   @if (error()) {
     <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
@@ -25,16 +22,20 @@
   }
 
   @if (cargando()) {
-    <p class="text-slate-500">Cargando deudores…</p>
+    <div class="space-y-3">
+      @for (fila of [1, 2, 3]; track fila) {
+        <div class="h-14 animate-pulse rounded-2xl bg-stone-200/60 ring-1 ring-stone-900/5"></div>
+      }
+    </div>
   } @else {
     <div class="grid gap-4 sm:grid-cols-2">
       <div class="card-pad">
         <p class="text-xs uppercase text-slate-500">Deudores activos</p>
-        <p class="text-3xl font-bold text-slate-800">{{ deudoresActivos() }}</p>
+        <p class="mt-1 text-3xl font-bold text-slate-800">{{ deudoresActivos() }}</p>
       </div>
       <div class="card-pad">
         <p class="text-xs uppercase text-slate-500">Total pendiente por cobrar</p>
-        <p class="text-3xl font-bold text-red-600">${{ totalPendiente() | number: '1.2-2' }}</p>
+        <p class="mt-1 text-3xl font-bold text-red-600">${{ totalPendiente() | number: '1.2-2' }}</p>
       </div>
     </div>
 
@@ -45,7 +46,7 @@
           <p class="mt-1 text-sm text-slate-400">Las ventas a fiado aparecerán aquí automáticamente.</p>
         </div>
       } @else {
-        <table class="w-full text-left text-sm">
+        <table class="tabla-responsive text-left">
           <thead class="border-b border-slate-200 text-xs uppercase text-slate-500">
             <tr>
               <th class="px-4 py-3">Cliente</th>
@@ -59,15 +60,15 @@
             @for (d of deudores(); track d.id) {
               <ng-container>
                 <tr>
-                  <td class="px-4 py-3 font-medium">{{ d.nombre }}</td>
-                  <td class="px-4 py-3 text-slate-500">{{ d.telefono ?? '—' }}</td>
-                  <td class="px-4 py-3 text-right font-bold text-red-600">
+                  <td data-etiqueta="Cliente" class="px-4 py-3 font-medium">{{ d.nombre }}</td>
+                  <td data-etiqueta="Teléfono" class="px-4 py-3 text-slate-500">{{ d.telefono ?? '—' }}</td>
+                  <td data-etiqueta="Saldo" class="px-4 py-3 text-right font-bold text-red-600">
                     ${{ d.saldo | number: '1.2-2' }}
                   </td>
-                  <td class="px-4 py-3 text-slate-500">
+                  <td data-etiqueta="Última venta" class="px-4 py-3 text-slate-500">
                     {{ d.ultima_venta ? (d.ultima_venta | date: 'dd/MM/yyyy hh:mm a') : '—' }}
                   </td>
-                  <td class="px-4 py-3">
+                  <td data-etiqueta="Acciones" class="px-4 py-3">
                     <div class="flex justify-end gap-2">
                       <button
                         (click)="abrirAbono(d)"
@@ -87,7 +88,7 @@
 
                 @if (expandido() === d.id) {
                   <tr>
-                    <td colspan="5" class="px-4 py-3">
+                    <td colspan="5" class="sin-etiqueta px-4 py-3">
                       @if (cargandoHist()) {
                         <p class="text-sm text-slate-500">Cargando historial…</p>
                       } @else {

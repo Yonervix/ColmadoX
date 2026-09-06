@@ -1,16 +1,18 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold">Inventario</h1>
-      <p class="text-sm text-slate-500">Productos sueltos, paquetes y cajas con foto, costo, venta y margen.</p>
-    </div>
+  <app-encabezado-pagina titulo="Inventario" subtitulo="Productos sueltos, paquetes y cajas con foto, costo, venta y margen." [conAcciones]="true">
     <button
+      acciones
       (click)="abrirNuevo()"
-      class="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+      class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition hover:bg-emerald-700"
     >
-      + Nuevo producto
+      <span class="inline-flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" class="h-4 w-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Nuevo producto
+      </span>
     </button>
-  </div>
+  </app-encabezado-pagina>
 
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <div class="relative max-w-md flex-1">
@@ -35,14 +37,18 @@
   }
 
   @if (cargando()) {
-    <p class="text-slate-500">Cargando inventario…</p>
+    <div class="space-y-3">
+      @for (fila of [1, 2, 3, 4, 5]; track fila) {
+        <div class="h-16 animate-pulse rounded-2xl bg-stone-200/60 ring-1 ring-stone-900/5"></div>
+      }
+    </div>
   } @else if (productos().length === 0) {
     <div class="card p-10 text-center">
       <p class="text-slate-500">Aún no hay productos. Crea el primero con el botón de arriba.</p>
     </div>
   } @else {
     <div class="card overflow-x-auto">
-      <table class="w-full text-sm">
+      <table class="tabla-responsive">
         <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
           <tr>
             <th class="px-4 py-3">Foto</th>
@@ -56,34 +62,35 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-      @for (grupo of grupos(); track grupo.categoria; let g = $index) {
-              <tr class="bg-emerald-50/70">
-                <th colspan="8" class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-800">
-                  {{ grupo.categoria }}
-                  <span class="ml-1.5 rounded-full bg-emerald-600/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                    {{ grupo.productos.length }}
-                  </span>
-                </th>
-              </tr>
-              @for (p of grupo.productos; track p.id) {
-                <tr class="hover:bg-slate-50">
-                  <td class="px-4 py-3">
-                    @if (p.foto_url) {
-                      <img [src]="p.foto_url" alt="" class="h-10 w-10 rounded-lg object-cover" />
-                    } @else {
-                      <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
-                        Sin foto
-                      </div>
-                    }
-                  </td>
-                  <td class="px-4 py-3">
-                    <p class="font-medium">{{ p.nombre }}</p>
-                    <p class="text-xs text-slate-400">{{ p.categorias?.nombre ?? 'Sin categoría' }}</p>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ etiquetaTipo(p) }}</span>
-                  </td>
-                  <td class="px-4 py-3">
+          @for (grupo of grupos(); track grupo.categoria) {
+            <tr class="fila-grupo bg-emerald-50/70">
+              <th colspan="8" class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-emerald-800">
+                <span>{{ grupo.categoria }}</span>
+                <span class="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600/10 px-1.5 text-[11px] font-semibold text-emerald-700">
+                  {{ grupo.productos.length }}
+                </span>
+              </th>
+            </tr>
+            @for (p of grupo.productos; track p.id) {
+              <tr class="hover:bg-slate-50">
+                <td data-etiqueta="Foto" class="px-4 py-3">
+                  @if (p.foto_url) {
+                    <img [src]="p.foto_url" alt="" class="h-10 w-10 rounded-lg object-cover" />
+                  } @else {
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs text-slate-400">
+                      Sin foto
+                    </div>
+                  }
+                </td>
+                <td data-etiqueta="Producto" class="px-4 py-3">
+                  <p class="font-medium">{{ p.nombre }}</p>
+                  <p class="text-xs text-slate-400">{{ p.categorias?.nombre ?? 'Sin categoría' }}</p>
+                </td>
+                <td data-etiqueta="Tipo" class="px-4 py-3">
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ etiquetaTipo(p) }}</span>
+                </td>
+                <td data-etiqueta="Stock" class="px-4 py-3">
+                  <div class="text-right">
                     <span
                       [class]="stockBajo(p)
                         ? 'rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700'
@@ -97,18 +104,20 @@
                     @if (esSinConteo(p)) {
                       <p class="mt-1 text-xs text-slate-400">Se agota desde Mermas</p>
                     }
-                  </td>
-                  <td class="px-4 py-3 text-slate-500">${{ p.precio_compra }}</td>
-                  <td class="px-4 py-3 font-semibold">${{ p.precio_venta }}</td>
-                  <td class="px-4 py-3">
-                    <span
-                      [class]="margen(p) >= 30 ? 'text-emerald-600' : margen(p) >= 15 ? 'text-amber-600' : 'text-red-600'"
-                      class="font-semibold"
-                    >
-                      {{ margen(p) | number: '1.0-1' }}%
-                    </span>
-                  </td>
-                  <td class="px-4 py-3 text-right">
+                  </div>
+                </td>
+                <td data-etiqueta="Costo" class="px-4 py-3 text-right text-slate-500">${{ p.precio_compra }}</td>
+                <td data-etiqueta="Venta" class="px-4 py-3 text-right font-semibold">${{ p.precio_venta }}</td>
+                <td data-etiqueta="Margen" class="px-4 py-3 text-right">
+                  <span
+                    [class]="margen(p) >= 30 ? 'text-emerald-600' : margen(p) >= 15 ? 'text-amber-600' : 'text-red-600'"
+                    class="font-semibold"
+                  >
+                    {{ margen(p) | number: '1.0-1' }}%
+                  </span>
+                </td>
+                <td data-etiqueta="Acciones" class="px-4 py-3 text-right">
+                  <span class="inline-flex gap-1.5">
                     <button
                       (click)="abrirEditar(p)"
                       class="rounded-lg px-3 py-1 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
@@ -121,9 +130,10 @@
                     >
                       Quitar
                     </button>
-                  </td>
-                </tr>
-              }
+                  </span>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>

@@ -1,18 +1,19 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-bold">Compras</h1>
-      <p class="text-sm text-slate-500">
-        Registra la compra al proveedor: el stock sube solo y el costo se actualiza a la última compra.
-      </p>
-    </div>
+  <app-encabezado-pagina
+    titulo="Compras"
+    subtitulo="Registra la compra al proveedor: el stock sube solo y el costo se actualiza a la última compra."
+    [conAcciones]="true"
+  >
     <button
+      acciones
       (click)="historialAbierto.set(!historialAbierto())"
-      class="rounded-lg bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+      [class]="historialAbierto()
+        ? 'rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-stone-800'
+        : 'rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50'"
     >
       {{ historialAbierto() ? 'Ocultar historial' : 'Historial de compras' }}
     </button>
-  </div>
+  </app-encabezado-pagina>
 
   @if (error()) {
     <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
@@ -109,7 +110,14 @@
 
   @if (historialAbierto()) {
     <div class="card overflow-x-auto">
-      <table class="w-full text-sm">
+      @if (cargando()) {
+        <div class="space-y-3 p-5">
+          @for (fila of [1, 2, 3]; track fila) {
+            <div class="h-11 animate-pulse rounded-xl bg-stone-200/60 ring-1 ring-stone-900/5"></div>
+          }
+        </div>
+      } @else {
+      <table class="tabla-responsive">
         <thead class="bg-slate-50 text-left text-xs uppercase text-slate-500">
           <tr>
             <th class="px-4 py-3">Fecha</th>
@@ -121,24 +129,27 @@
         <tbody class="divide-y divide-slate-100">
           @for (c of compras(); track c.id) {
             <tr class="hover:bg-slate-50">
-              <td class="px-4 py-3">{{ c.fecha | date: 'dd/MM/yyyy hh:mm a' }}</td>
-              <td class="px-4 py-3 font-medium">{{ c.proveedor }}</td>
-              <td class="px-4 py-3">
-                @for (item of c.compra_items; track item.id) {
-                  <span class="mr-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
-                    {{ item.cantidad }} uds
-                  </span>
-                }
+              <td data-etiqueta="Fecha" class="px-4 py-3">{{ c.fecha | date: 'dd/MM/yyyy hh:mm a' }}</td>
+              <td data-etiqueta="Proveedor" class="px-4 py-3 font-medium">{{ c.proveedor }}</td>
+              <td data-etiqueta="Productos" class="px-4 py-3">
+                <span class="inline-flex flex-wrap gap-1">
+                  @for (item of c.compra_items; track item.id) {
+                    <span class="inline-block rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                      {{ item.cantidad }} uds
+                    </span>
+                  }
+                </span>
               </td>
-              <td class="px-4 py-3 text-right font-semibold">${{ c.total | number: '1.2-2' }}</td>
+              <td data-etiqueta="Total" class="px-4 py-3 text-right font-semibold">${{ c.total | number: '1.2-2' }}</td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="4" class="px-4 py-8 text-center text-slate-500">Aún no hay compras registradas.</td>
+              <td colspan="4" class="sin-etiqueta px-4 py-8 text-center text-slate-500">Aún no hay compras registradas.</td>
             </tr>
           }
         </tbody>
       </table>
+      }
     </div>
   }
 </div>

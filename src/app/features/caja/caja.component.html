@@ -5,7 +5,11 @@
   />
 
   @if (cargando()) {
-    <p class="text-slate-500">Cargando…</p>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      @for (stat of [1, 2, 3, 4, 5, 6]; track stat) {
+        <div class="h-28 animate-pulse rounded-2xl bg-stone-200/60 ring-1 ring-stone-900/5"></div>
+      }
+    </div>
   } @else {
     @if (error()) {
       <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>

@@ -94,6 +94,90 @@
   .chip {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
   }
+
+  /* Tabla responsiva: en pantallas pequeñas cada fila se convierte en tarjeta apilada */
+  .tabla-responsive {
+    @apply w-full text-sm;
+  }
+
+  @media (max-width: 767px) {
+    .tabla-responsive {
+      display: block;
+    }
+
+    .tabla-responsive thead {
+      display: none;
+    }
+
+    .tabla-responsive tbody {
+      display: block;
+      width: 100%;
+    }
+
+    .tabla-responsive tbody > tr {
+      display: block;
+      margin-bottom: 0.75rem;
+      border-radius: 1rem;
+      border: 1px solid rgb(231 229 228 / 0.8);
+      background: #fff;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 1px 2px rgb(28 25 23 / 0.04), 0 16px 40px rgb(28 25 23 / 0.07);
+    }
+
+    .tabla-responsive tbody > tr:last-child {
+      margin-bottom: 0;
+    }
+
+    .tabla-responsive td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border: none !important;
+      padding: 0.45rem 0;
+    }
+
+    .tabla-responsive td[data-etiqueta]::before {
+      content: attr(data-etiqueta);
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #78716c;
+    }
+
+    .tabla-responsive td.sin-etiqueta {
+      display: block;
+    }
+
+    .tabla-responsive td.sin-etiqueta::before {
+      content: none;
+    }
+
+    .tabla-responsive td.oculto-movil {
+      display: none;
+    }
+
+    /* Filas de encabezado visual (ej. categorías en inventario) */
+    .tabla-responsive tr.fila-grupo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      border: none;
+      background: transparent !important;
+      box-shadow: none;
+      padding: 0.25rem 0;
+    }
+
+    .tabla-responsive tr.fila-grupo th {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      border: none;
+      padding: 0;
+    }
+  }
 }
 
 .xide-notificaciones-container {

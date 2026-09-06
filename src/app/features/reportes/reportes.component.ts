@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ReportesService, type ResumenReportes, type VentaReporte } from './reportes.service';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 
 export interface Periodo {
   key: string;
@@ -25,7 +26,7 @@ function iso(d: Date): string {
 
 @Component({
   selector: 'app-reportes',
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, EncabezadoPaginaComponent],
   templateUrl: './reportes.component.html',
 })
 export class ReportesComponent implements OnInit {

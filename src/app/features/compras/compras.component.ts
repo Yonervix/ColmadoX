@@ -2,11 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { ComprasService, type ItemCompra, type Compra } from './compras.service';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 import type { Producto, TipoProducto } from '../inventario/inventario.types';
 
 @Component({
   selector: 'app-compras',
-  imports: [FormsModule, DecimalPipe, DatePipe],
+  imports: [FormsModule, DecimalPipe, DatePipe, EncabezadoPaginaComponent],
   templateUrl: './compras.component.html',
 })
 export class ComprasComponent implements OnInit {

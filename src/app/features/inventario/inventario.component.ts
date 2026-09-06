@@ -2,11 +2,12 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angula
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InventarioService } from './inventario.service';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 import type { Categoria, Producto, ProductoForm } from './inventario.types';
 
 @Component({
   selector: 'app-inventario',
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, EncabezadoPaginaComponent],
   templateUrl: './inventario.component.html',
 })
 export class InventarioComponent implements OnInit {

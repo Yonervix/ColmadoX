@@ -2,13 +2,14 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MermasService, type ItemConteo, type Merma } from './mermas.service';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 import type { Producto } from '../inventario/inventario.types';
 
 type Pestana = 'mermas' | 'conteo';
 
 @Component({
   selector: 'app-mermas',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, EncabezadoPaginaComponent],
   templateUrl: './mermas.component.html',
 })
 export class MermasComponent implements OnInit {

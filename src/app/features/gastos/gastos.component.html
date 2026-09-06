@@ -1,21 +1,18 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
-    <h1 class="text-2xl font-bold">Gastos</h1>
-    <p class="text-sm text-slate-500">Registro de gastos y presupuesto mensual.</p>
-  </div>
+  <app-encabezado-pagina titulo="Gastos" subtitulo="Registro de gastos y presupuesto mensual." />
 
-  <div class="flex gap-2">
+  <div class="inline-flex rounded-xl bg-stone-100 p-1 ring-1 ring-stone-200/80">
     <button
       (click)="tab.set('gastos')"
-      [class]="tab() === 'gastos' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'"
-      class="rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition"
+      [class]="tab() === 'gastos' ? 'bg-white font-semibold text-emerald-700 shadow-sm' : 'text-slate-600'"
+      class="rounded-lg px-4 py-2 text-sm transition"
     >
       Gastos
     </button>
     <button
       (click)="tab.set('presupuesto')"
-      [class]="tab() === 'presupuesto' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'"
-      class="rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition"
+      [class]="tab() === 'presupuesto' ? 'bg-white font-semibold text-emerald-700 shadow-sm' : 'text-slate-600'"
+      class="rounded-lg px-4 py-2 text-sm transition"
     >
       Presupuesto
     </button>
@@ -88,8 +85,8 @@
       @for (p of ['hoy', '7d', '30d', 'mes', 'año']; track p) {
         <button
           (click)="cambiarPeriodo(p)"
-          [class]="periodo() === p ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'"
-          class="rounded-lg px-3 py-1.5 text-sm font-semibold shadow-sm transition"
+          [class]="periodo() === p ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'"
+          class="rounded-lg px-3 py-1.5 text-xs font-semibold shadow-sm transition"
         >
           {{ p === 'hoy' ? 'Hoy' : p === '7d' ? '7 días' : p === '30d' ? '30 días' : p === 'mes' ? 'Este mes' : 'Este año' }}
         </button>
@@ -99,11 +96,20 @@
 
     <div class="card overflow-hidden">
       @if (cargando()) {
-        <p class="p-6 text-sm text-slate-500">Cargando gastos…</p>
+        <div class="space-y-3 p-5">
+          @for (fila of [1, 2, 3, 4]; track fila) {
+            <div class="h-11 animate-pulse rounded-xl bg-stone-200/60 ring-1 ring-stone-900/5"></div>
+          }
+        </div>
       } @else if (gastos().length === 0) {
-        <p class="p-6 text-sm text-slate-500">No hay gastos en este período.</p>
+        <div class="p-10 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto h-8 w-8 text-stone-300">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+          </svg>
+          <p class="mt-3 text-slate-600">No hay gastos en este período.</p>
+        </div>
       } @else {
-        <table class="w-full text-left text-sm">
+        <table class="tabla-responsive text-left">
           <thead class="border-b border-slate-200 text-xs uppercase text-slate-500">
             <tr>
               <th class="px-4 py-3">Fecha</th>
@@ -115,14 +121,14 @@
           <tbody class="divide-y divide-slate-100">
             @for (g of gastos(); track g.id) {
               <tr>
-                <td class="px-4 py-3 text-slate-500">{{ g.fecha | date: 'dd/MM/yyyy hh:mm a' }}</td>
-                <td class="px-4 py-3 font-medium">{{ g.descripcion }}</td>
-                <td class="px-4 py-3">
+                <td data-etiqueta="Fecha" class="px-4 py-3 text-slate-500">{{ g.fecha | date: 'dd/MM/yyyy hh:mm a' }}</td>
+                <td data-etiqueta="Descripción" class="px-4 py-3 font-medium">{{ g.descripcion }}</td>
+                <td data-etiqueta="Categoría" class="px-4 py-3">
                   <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                     {{ g.categoria }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-right font-semibold text-red-600">−${{ g.monto | number: '1.2-2' }}</td>
+                <td data-etiqueta="Monto" class="px-4 py-3 text-right font-semibold text-red-600">−${{ g.monto | number: '1.2-2' }}</td>
               </tr>
             }
           </tbody>
@@ -161,8 +167,8 @@
         </div>
       </div>
 
-      <div class="card overflow-hidden">
-        <table class="w-full text-left text-sm">
+      <div class="card overflow-x-auto">
+        <table class="tabla-responsive text-left">
           <thead class="border-b border-slate-200 text-xs uppercase text-slate-500">
             <tr>
               <th class="px-4 py-3">Categoría</th>
@@ -175,11 +181,11 @@
           <tbody class="divide-y divide-slate-100">
             @for (f of p.filas; track f.categoria) {
               <tr>
-                <td class="px-4 py-3 font-medium capitalize">{{ f.categoria }}</td>
-                <td class="px-4 py-3 text-right {{ (f.gastado > 0) ? 'text-red-600' : 'text-slate-500' }}">
+                <td data-etiqueta="Categoría" class="px-4 py-3 font-medium capitalize">{{ f.categoria }}</td>
+                <td data-etiqueta="Gastado" class="px-4 py-3 text-right {{ (f.gastado > 0) ? 'text-red-600' : 'text-slate-500' }}">
                   ${{ f.gastado | number: '1.2-2' }}
                 </td>
-                <td class="px-4 py-3">
+                <td data-etiqueta="Presupuesto" class="px-4 py-3">
                   <input
                     type="number"
                     min="0"
@@ -189,11 +195,11 @@
                     class="w-32 rounded-lg border border-slate-300 px-2 py-1 focus:border-emerald-500 focus:outline-none"
                   />
                 </td>
-                <td class="px-4 py-3 text-right font-semibold"
+                <td data-etiqueta="Diferencia" class="px-4 py-3 text-right font-semibold"
                     [class]="(f.presupuesto - f.gastado) < 0 ? 'text-red-600' : 'text-slate-700'">
                   ${{ f.presupuesto - f.gastado | number: '1.2-2' }}
                 </td>
-                <td class="px-4 py-3 text-right">
+                <td data-etiqueta="Estado" class="px-4 py-3 text-right">
                   @if (f.presupuesto > 0 && f.gastado > f.presupuesto) {
                     <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">Superado</span>
                   } @else if (f.presupuesto > 0) {
@@ -210,13 +216,13 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="p-6 text-center text-sm text-slate-500">
+                <td colspan="5" class="sin-etiqueta p-6 text-center text-sm text-slate-500">
                   Sin categorías este mes. Añade una abajo.
                 </td>
               </tr>
             }
             <tr class="bg-slate-50">
-              <td class="px-4 py-3">
+              <td data-etiqueta="Nueva" class="px-4 py-3">
                 <input
                   type="text"
                   [(ngModel)]="nuevaCat"
@@ -225,8 +231,8 @@
                   class="w-full rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </td>
-              <td></td>
-              <td class="px-4 py-3">
+              <td class="oculto-movil"></td>
+              <td data-etiqueta="Monto" class="px-4 py-3">
                 <input
                   type="number"
                   [(ngModel)]="nuevoMonto"
@@ -237,8 +243,8 @@
                   class="w-32 rounded-lg border border-slate-300 px-2 py-1 text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </td>
-              <td></td>
-              <td class="px-4 py-3 text-right">
+              <td class="oculto-movil"></td>
+              <td data-etiqueta="" class="px-4 py-3 text-right">
                 <button
                   (click)="agregarCategoria()"
                   [disabled]="guardandoPres()"

@@ -2,6 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GastosService, type GastoRegistro, type FilaPresupuesto, CATEGORIAS_SUGERIDAS } from './gastos.service';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 
 type Periodo = 'hoy' | '7d' | '30d' | 'mes' | 'año';
 
@@ -20,7 +21,7 @@ interface Rango {
 
 @Component({
   selector: 'app-gastos',
-  imports: [DatePipe, DecimalPipe, FormsModule],
+  imports: [DatePipe, DecimalPipe, FormsModule, EncabezadoPaginaComponent],
   templateUrl: './gastos.component.html',
 })
 export class GastosComponent implements OnInit {

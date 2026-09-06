@@ -31,7 +31,15 @@
     }
 
     @if (cargando()) {
-      <p class="text-slate-500">Cargando productos…</p>
+      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+        @for (p of [1, 2, 3, 4, 5, 6, 7, 8]; track p) {
+          <div class="card p-3">
+            <div class="h-24 animate-pulse rounded-lg bg-stone-200/70"></div>
+            <div class="mt-2 h-4 w-3/4 animate-pulse rounded bg-stone-200/70"></div>
+            <div class="mt-1.5 h-3 w-1/2 animate-pulse rounded bg-stone-200/70"></div>
+          </div>
+        }
+      </div>
     } @else {
       <div class="flex flex-wrap gap-2">
         @for (t of tiposFiltro; track t.valor) {

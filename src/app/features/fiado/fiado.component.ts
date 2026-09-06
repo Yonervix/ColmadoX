@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FiadoService, type Deudor, type HistorialCli } from './fiado.service';
 import { AuthService } from '../../core/services/auth.service';
+import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
 
 @Component({
   selector: 'app-fiado',
-  imports: [DecimalPipe, DatePipe, FormsModule],
+  imports: [DecimalPipe, DatePipe, FormsModule, EncabezadoPaginaComponent],
   templateUrl: './fiado.component.html',
 })
 export class FiadoComponent implements OnInit {
