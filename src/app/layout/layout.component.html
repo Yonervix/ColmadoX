@@ -1,6 +1,6 @@
 <div class="min-h-screen">
   <header
-    class="sticky top-0 z-30 flex items-center justify-between border-b border-white/5 bg-[#0a2419]/95 px-4 py-3 text-stone-100 shadow-lg shadow-emerald-950/20 backdrop-blur lg:hidden"
+    class="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-timon-950/95 px-4 py-3 text-stone-100 shadow-lg shadow-timon-950/30 backdrop-blur lg:hidden"
   >
     <button
       (click)="menuAbierto.set(true)"
@@ -12,10 +12,10 @@
       </svg>
     </button>
     <span class="flex items-center gap-2.5 font-display text-lg font-semibold tracking-tight">
-      <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-700 text-sm font-bold text-white shadow-md shadow-emerald-950/40 ring-1 ring-white/20">
+      <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-guineo-400 to-guineo-600 text-sm font-extrabold text-timon-950 shadow-md shadow-timon-950/40 ring-1 ring-white/30">
         C
       </span>
-      Colmado<span class="text-amber-400">X</span>
+      Colmado<span class="text-guineo-400">X</span>
     </span>
     <button
       (click)="salir()"
@@ -29,22 +29,22 @@
   </header>
 
   @if (menuAbierto()) {
-    <div class="fixed inset-0 z-40 bg-emerald-950/60 backdrop-blur-sm lg:hidden" (click)="menuAbierto.set(false)"></div>
+    <div class="fixed inset-0 z-40 bg-timon-950/70 backdrop-blur-sm lg:hidden" (click)="menuAbierto.set(false)"></div>
   }
 
   <div class="flex">
     <aside
-      [style.background-image]="'radial-gradient(120% 70% at 85% -10%, rgba(79,168,132,0.22), rgba(10,36,25,0) 55%), radial-gradient(90% 50% at -20% 110%, rgba(224,120,47,0.08), rgba(10,36,25,0) 50%), linear-gradient(180deg, #11392d 0%, #0a2419 55%, #05110c 100%)'"
-      [class]="'fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col text-stone-100 shadow-2xl shadow-emerald-950/40 transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ' + (menuAbierto() ? 'translate-x-0' : '-translate-x-full')"
+      [style.background-image]="'radial-gradient(120% 70% at 85% -10%, rgba(85,170,208,0.18), rgba(11,35,50,0) 55%), radial-gradient(90% 50% at -20% 110%, rgba(242,190,14,0.1), rgba(11,35,50,0) 50%), linear-gradient(180deg, #15587a 0%, #0b2332 60%, #06131e 100%)'"
+      [class]="'fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col text-stone-100 shadow-2xl shadow-timon-950/40 transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ' + (menuAbierto() ? 'translate-x-0' : '-translate-x-full')"
     >
       <div class="flex items-center justify-between px-5 pb-5 pt-6">
         <div class="flex items-center gap-3">
-          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-700 font-display text-xl font-bold text-white shadow-lg shadow-black/30 ring-1 ring-white/20">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-guineo-400 to-guineo-600 font-display text-xl font-extrabold text-timon-950 shadow-lg shadow-black/40 ring-1 ring-white/30">
             C
           </div>
           <div>
             <p class="font-display text-xl font-semibold leading-none tracking-tight">
-              Colmado<span class="text-amber-400">X</span>
+              Colmado<span class="text-guineo-400">X</span>
             </p>
             <p class="mt-1 text-[11px] font-medium text-stone-400">Sistema de gestión de colmado</p>
           </div>
@@ -65,7 +65,7 @@
       <nav class="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         @for (grupo of grupos(); track grupo.titulo) {
           <div>
-            <p class="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-100/50">{{ grupo.titulo }}</p>
+            <p class="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-timon-100/60">{{ grupo.titulo }}</p>
             <div class="space-y-1">
               @for (item of grupo.items; track item.path) {
                 <a
@@ -80,11 +80,11 @@
                 >
                   <app-layout-icon
                     [name]="item.icon"
-                    [class]="rla.isActive ? 'shrink-0 text-amber-300' : 'shrink-0 text-stone-400 transition-colors group-hover:text-amber-300'"
+                    [class]="rla.isActive ? 'shrink-0 text-guineo-300' : 'shrink-0 text-stone-400 transition-colors group-hover:text-guineo-300'"
                   />
                   {{ item.label }}
                   @if (rla.isActive) {
-                    <span class="ml-auto h-1.5 w-1.5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.8)]"></span>
+                    <span class="ml-auto h-1.5 w-1.5 rounded-full bg-guineo-400 shadow-[0_0_10px_rgba(255,214,58,0.7)]"></span>
                   }
                 </a>
               }
@@ -98,7 +98,7 @@
           <p class="text-[11px] font-medium uppercase tracking-wider text-stone-400">Conectado como</p>
           <div class="mt-1.5 flex items-center justify-between gap-2">
             <p class="min-w-0 truncate text-sm font-semibold text-white">{{ perfil()?.nombre ?? '…' }}</p>
-            <span class="shrink-0 rounded-full bg-amber-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300 ring-1 ring-amber-400/20">
+            <span class="shrink-0 rounded-full bg-guineo-400/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-guineo-300 ring-1 ring-guineo-400/30">
               {{ perfil()?.rol === 'jefe' ? 'Jefe' : 'Cajero' }}
             </span>
           </div>

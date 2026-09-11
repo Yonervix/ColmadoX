@@ -1,6 +1,6 @@
 <div class="space-y-8">
   <div class="flex flex-col gap-1">
-    <h1 class="font-display text-3xl font-semibold tracking-tight text-stone-900">
+<h1 class="font-display text-3xl font-bold tracking-tight text-timon-900">
       {{ saludo() }}, {{ perfil()?.nombre ?? '…' }}
     </h1>
     <p class="text-sm text-stone-500">{{ fechaLarga() }}</p>
@@ -19,17 +19,17 @@
   } @else {
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       <div class="card-pad relative overflow-hidden">
-        <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-300"></span>
+        <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-timon-500 to-timon-300"></span>
         <div class="flex items-center justify-between gap-2">
           <p class="label-mini">Ventas de hoy</p>
-          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-timon-50 text-timon-700 ring-1 ring-timon-100">
             <app-layout-icon name="vender" />
           </span>
         </div>
-        <p class="mt-3 text-3xl font-bold tracking-tight text-emerald-700">${{ ventasHoy() | number: '1.2-2' }}</p>
+        <p class="mt-3 text-3xl font-black tracking-tight text-timon-800">${{ ventasHoy() | number: '1.2-2' }}</p>
         @if (auth.isJefe()) {
           <p class="mt-1.5 text-xs text-stone-400">
-            {{ ticketsHoy() }} ventas · <span class="font-semibold text-emerald-700">${{ gananciaHoy() | number: '1.2-2' }} ganancia</span>
+            {{ ticketsHoy() }} ventas · <span class="font-semibold text-indigo-700">${{ gananciaHoy() | number: '1.2-2' }} ganancia</span>
           </p>
         } @else {
           <p class="mt-1.5 text-xs text-stone-400">Contado + cobros de fiado de la caja</p>
@@ -40,19 +40,19 @@
         (click)="ir('/caja')"
         class="card-pad group relative overflow-hidden text-left transition hover:shadow-lift"
       >
-        <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400 to-amber-300"></span>
+        <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-300"></span>
         <div class="flex items-center justify-between gap-2">
           <p class="label-mini">En caja</p>
           <span
             [class]="cajaAbierta()
-              ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100'
-              : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100'"
+              ? 'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-timon-50 text-timon-700 ring-1 ring-timon-100'
+              : 'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-mamey-50 text-mamey-700 ring-1 ring-mamey-100'"
           >
             <app-layout-icon name="caja" />
           </span>
         </div>
         @if (cajaAbierta()) {
-          <p class="mt-3 text-3xl font-bold tracking-tight text-stone-900">${{ debeHaber() | number: '1.2-2' }}</p>
+          <p class="mt-3 text-3xl font-bold tracking-tight text-timon-900">${{ debeHaber() | number: '1.2-2' }}</p>
           <p class="mt-1.5 text-xs font-medium text-emerald-700">Caja abierta · debe haber en físico</p>
         } @else {
           <p class="mt-3 text-3xl font-bold tracking-tight text-amber-500">Sin caja</p>
@@ -64,14 +64,14 @@
         (click)="ir('/fiado')"
         class="card-pad group relative overflow-hidden text-left transition hover:shadow-lift"
       >
-        <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 to-amber-400"></span>
+        <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-mamey-400 to-mamey-300"></span>
         <div class="flex items-center justify-between gap-2">
           <p class="label-mini">Deudores</p>
-          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-mamey-50 text-mamey-700 ring-1 ring-mamey-100">
             <app-layout-icon name="fiado" />
           </span>
         </div>
-        <p class="mt-3 text-3xl font-bold tracking-tight text-amber-600">${{ saldoDeudores() | number: '1.2-2' }}</p>
+        <p class="mt-3 text-3xl font-black tracking-tight text-mamey-700">${{ saldoDeudores() | number: '1.2-2' }}</p>
         <p class="mt-1.5 text-xs text-stone-400">{{ deudores().length }} personas deben</p>
       </button>
 
@@ -97,19 +97,19 @@
     <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
       <button
         (click)="ir('/ventas')"
-        class="flex items-center justify-center gap-2 rounded-xl bg-emerald-700 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/20 transition hover:bg-emerald-800 hover:shadow-emerald-900/30"
+        class="flex items-center justify-center gap-2 rounded-xl bg-guineo-400 py-3.5 text-sm font-extrabold text-timon-950 shadow-md shadow-guineo-500/30 transition hover:bg-guineo-300"
       >
         <app-layout-icon name="vender" /> Vender
       </button>
       <button
         (click)="ir('/caja')"
-        class="flex items-center justify-center gap-2 rounded-xl bg-stone-900 py-3.5 text-sm font-semibold text-white shadow-md shadow-stone-900/20 transition hover:bg-stone-800"
+        class="flex items-center justify-center gap-2 rounded-xl bg-timon-700 py-3.5 text-sm font-semibold text-white shadow-md shadow-timon-900/30 transition hover:bg-timon-800"
       >
         <app-layout-icon name="caja" /> Caja
       </button>
       <button
         (click)="ir('/fiado')"
-        class="flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3.5 text-sm font-semibold text-white shadow-md shadow-amber-600/25 transition hover:bg-amber-600"
+        class="flex items-center justify-center gap-2 rounded-xl bg-mamey-600 py-3.5 text-sm font-semibold text-white shadow-md shadow-mamey-700/30 transition hover:bg-mamey-700"
       >
         <app-layout-icon name="fiado" /> Fiado
       </button>

@@ -1,273 +1,384 @@
-<div class="grid gap-6 lg:grid-cols-3">
-  <section class="space-y-4 lg:col-span-2">
-    <app-encabezado-pagina titulo="Vender" [conAcciones]="true">
-      <input
-        acciones
-        type="search"
-        placeholder="Buscar producto…"
-        [ngModel]="buscando()"
-        (ngModelChange)="buscando.set($event)"
-        name="buscar"
-        class="w-64 rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
-      />
-    </app-encabezado-pagina>
+<div class="pb-36 lg:pb-0">
+  <div class="grid gap-6 lg:grid-cols-3">
+    <section class="space-y-4 lg:col-span-2">
+      <app-encabezado-pagina titulo="Vender" subtitulo="Toca un producto para sumarlo al ticket. Usa / para buscar rápido." [conAcciones]="true">
+        <input
+          #buscador
+          acciones
+          type="search"
+          placeholder="Buscar producto…"
+          aria-label="Buscar productos"
+          [ngModel]="buscando()"
+          (ngModelChange)="buscando.set($event)"
+          (keydown)="onBuscarKeydown($event)"
+          name="buscar"
+          class="h-12 w-full rounded-xl border border-stone-300 bg-white px-4 sm:w-80 focus:border-timon-600 focus:outline-none"
+        />
+      </app-encabezado-pagina>
 
-    @if (error()) {
-      <p class="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
-    }
+      @if (error() && productos().length === 0 && !cargando()) {
+        <p role="alert" class="rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 text-sm text-red-600">{{ error() }}</p>
+      }
 
-    @if (sinCaja()) {
-      <div class="flex items-center justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        <p>
-          <b>No hay una caja abierta.</b> Sin caja abierta no se puede vender.
-        </p>
-        <button
-          (click)="irACaja()"
-          class="shrink-0 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
-        >
-          Abrir caja
-        </button>
-      </div>
-    }
-
-    @if (cargando()) {
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-        @for (p of [1, 2, 3, 4, 5, 6, 7, 8]; track p) {
-          <div class="card p-3">
-            <div class="h-24 animate-pulse rounded-lg bg-stone-200/70"></div>
-            <div class="mt-2 h-4 w-3/4 animate-pulse rounded bg-stone-200/70"></div>
-            <div class="mt-1.5 h-3 w-1/2 animate-pulse rounded bg-stone-200/70"></div>
-          </div>
-        }
-      </div>
-    } @else {
-      <div class="flex flex-wrap gap-2">
-        @for (t of tiposFiltro; track t.valor) {
+      @if (sinCaja()) {
+        <div class="flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p>
+            <b>No hay una caja abierta.</b> Sin caja abierta no se puede vender.
+          </p>
           <button
-            (click)="filtroTipo.set(t.valor)"
-            [class]="filtroTipo() === t.valor
-              ? 'bg-emerald-600 text-white'
-              : 'bg-white text-slate-600 hover:bg-slate-50'"
-            class="rounded-full border border-slate-200 px-3.5 py-1.5 text-xs font-semibold transition"
+            (click)="irACaja()"
+            class="shrink-0 rounded-xl bg-timon-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-timon-800"
           >
-            {{ t.etiqueta }}
+            Abrir caja
           </button>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
-        @for (p of productosFiltrados(); track p.id) {
-          <button
-            (click)="agregar(p)"
-            [disabled]="!esSinConteo(p) && p.stock <= 0"
-            [class]="!esSinConteo(p) && p.stock <= 0 ? 'opacity-40' : ''"
-            class="group card p-3 text-left transition hover:shadow-lift disabled:cursor-default"
-          >
-            <div class="mb-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-              @if (p.foto_url) {
-                <img [src]="p.foto_url" alt="" class="h-full w-full object-cover" />
-              } @else {
-                <span class="text-xs text-slate-400">Sin foto</span>
-              }
-            </div>
-            <p class="truncate text-sm font-semibold">{{ p.nombre }}</p>
-            <p class="text-xs text-slate-400">
-              {{ etiquetaTipo(p.tipo) }}
-              @if (esSinConteo(p)) {
-                <span class="text-amber-500">· sin conteo</span>
-              }
-            </p>
-            <div class="mt-1 flex items-center justify-between">
-              <span class="text-base font-bold text-emerald-600">${{ p.precio_venta }}</span>
-              <span [class]="!esSinConteo(p) && p.stock <= (p.stock_minimo || 0) ? 'text-red-500' : 'text-slate-400'" class="text-xs">
-                {{ stockLegible(p) }}
-              </span>
-            </div>
-          </button>
-        } @empty {
-          <p class="col-span-full text-center text-slate-500">No hay productos que coincidan.</p>
-        }
-      </div>
-    }
-  </section>
-
-  <aside class="space-y-4 lg:sticky lg:top-0 lg:self-start">
-    <div class="card-pad">
-      <div class="mb-4 flex rounded-xl bg-slate-100 p-1">
-        <button
-          (click)="seleccionarTipo('contado')"
-          [class]="tipo() === 'contado' ? 'bg-emerald-600 text-white' : 'text-slate-600'"
-          class="flex-1 rounded-lg py-2 text-sm font-semibold transition"
-        >
-          Contado
-        </button>
-        <button
-          (click)="seleccionarTipo('fiado')"
-          [class]="tipo() === 'fiado' ? 'bg-emerald-600 text-white' : 'text-slate-600'"
-          class="flex-1 rounded-lg py-2 text-sm font-semibold transition"
-        >
-          Fiado
-        </button>
-      </div>
-
-      @if (tipo() === 'fiado') {
-        <div class="space-y-2">
-          <select
-            [ngModel]="clienteId()"
-            (ngModelChange)="clienteId.set($event)"
-            name="cliente"
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:border-emerald-500 focus:outline-none"
-          >
-            <option [ngValue]="null">Selecciona el cliente…</option>
-            @for (c of clientes(); track c.id) {
-              <option [ngValue]="c.id">{{ c.nombre }}</option>
-            }
-          </select>
-          <div class="flex gap-2">
-            <input
-              type="text"
-              [ngModel]="nuevoCliente()"
-              (ngModelChange)="nuevoCliente.set($event)"
-              name="nuevoCliente"
-              placeholder="Cliente nuevo…"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
-            />
-            <button
-              (click)="crearClienteRapido()"
-              class="shrink-0 rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-            >
-              Agregar
-            </button>
-          </div>
         </div>
       }
 
-      <div class="mt-4 max-h-72 space-y-2 overflow-y-auto">
-        @for (linea of carrito(); track linea.producto.id) {
-          <div class="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">{{ linea.producto.nombre }}</p>
-              <p class="text-xs text-slate-500">
-                ${{ linea.producto.precio_venta | number: '1.2-2' }} × {{ linea.cantidad }}
-              </p>
+      @if (cargando()) {
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+          @for (p of [1, 2, 3, 4, 5, 6, 7, 8]; track p) {
+            <div class="card p-3">
+              <div class="h-24 animate-pulse rounded-xl bg-stone-200/70"></div>
+              <div class="mt-2 h-4 w-3/4 animate-pulse rounded bg-stone-200/70"></div>
+              <div class="mt-1.5 h-3 w-1/2 animate-pulse rounded bg-stone-200/70"></div>
             </div>
-            <span class="text-sm font-semibold text-slate-700">
-              ${{ (linea.cantidad * linea.producto.precio_venta) | number: '1.2-2' }}
-            </span>
-            <div class="flex items-center gap-1">
-              <button
-                (click)="bajar(linea)"
-                class="h-7 w-7 rounded-lg bg-slate-200 text-sm font-bold hover:bg-slate-300"
-              >
-                −
-              </button>
-              <span class="w-6 text-center text-sm font-semibold">{{ linea.cantidad }}</span>
-              <button
-                (click)="subir(linea)"
-                class="h-7 w-7 rounded-lg bg-slate-200 text-sm font-bold hover:bg-slate-300"
-              >
-                +
-              </button>
-            </div>
+          }
+        </div>
+      } @else {
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtrar por tipo de producto">
+          @for (t of tiposFiltro; track t.valor) {
             <button
-              (click)="quitar(linea)"
-              class="ml-1 rounded-lg px-1.5 py-1 text-xs text-red-600 hover:bg-red-50"
+              (click)="filtroTipo.set(t.valor)"
+              aria-pressed="filtroTipo() === t.valor"
+              [class]="filtroTipo() === t.valor
+                ? 'bg-timon-600 text-white ring-2 ring-timon-600 ring-offset-2 ring-offset-stone-100'
+                : 'bg-white text-stone-600 hover:bg-stone-100 ring-1 ring-stone-200'"
+              class="h-11 rounded-full px-4 text-sm font-semibold transition"
             >
-              ✕
+              {{ t.etiqueta }}
+            </button>
+          }
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+          @for (p of productosFiltrados(); track p.id) {
+            <button
+              (click)="agregar(p)"
+              [disabled]="!esSinConteo(p) && p.stock <= 0"
+              [class]="!esSinConteo(p) && p.stock <= 0 ? 'opacity-50' : ''"
+              class="group card p-3 text-left transition hover:shadow-lift disabled:cursor-default"
+            >
+              <div class="relative mb-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-stone-100">
+                @if (!esSinConteo(p) && p.stock <= 0) {
+                  <span class="absolute inset-0 flex items-center justify-center bg-white/60 text-sm font-bold text-red-600">
+                    Agotado
+                  </span>
+                }
+                @if (p.foto_url) {
+                  <img [src]="p.foto_url" alt="" class="h-full w-full object-cover" />
+                } @else {
+                  <span class="text-sm font-medium text-stone-400">Sin foto</span>
+                }
+              </div>
+              <div class="flex items-center justify-between gap-1">
+                <span class="truncate text-sm font-semibold text-stone-900">{{ p.nombre }}</span>
+                <span [class]="pillTipo(p.tipo)" class="shrink-0">{{ etiquetaTipo(p.tipo) }}</span>
+              </div>
+              @if (esSinConteo(p)) {
+                <p class="text-[11px] font-medium text-amber-600">se vende sin conteo</p>
+              }
+              <div class="mt-1 flex items-center justify-between">
+                <span class="text-lg font-black tracking-tight text-timon-800">${{ p.precio_venta | number: '1.2-2' }}</span>
+                <span [class]="!esSinConteo(p) && p.stock <= (p.stock_minimo || 0) ? 'font-semibold text-red-500' : 'text-stone-400'" class="text-xs">
+                  {{ stockLegible(p) }}
+                </span>
+              </div>
+              <span class="sr-only">Precio {{ p.precio_venta | number: '1.2-2' }} pesos, {{ etiquetaTipo(p.tipo) }}, {{ stockLegible(p) }}</span>
+            </button>
+          } @empty {
+            @if (!error()) {
+              <p class="col-span-full rounded-2xl bg-white py-10 text-center text-sm text-stone-500">
+                No hay productos que coincidan.
+              </p>
+            }
+          }
+        </div>
+      }
+    </section>
+
+    <aside class="space-y-4 lg:sticky lg:top-0 lg:self-start">
+      <div [class]="ticketAbierto() ? 'block' : 'hidden lg:block'">
+        <div class="card-pad">
+          <div class="mb-4 grid grid-cols-2 rounded-2xl bg-stone-200/60 p-1" role="tablist" aria-label="Tipo de venta">
+            <button
+              (click)="seleccionarTipo('contado')"
+              role="tab"
+              aria-selected="tipo() === 'contado'"
+              [class]="tipo() === 'contado'
+                ? 'bg-timon-600 text-white shadow-sm'
+                : 'text-stone-600 hover:bg-stone-200/60'"
+              class="h-11 rounded-xl text-sm font-bold transition"
+            >
+              Contado
+            </button>
+            <button
+              (click)="seleccionarTipo('fiado')"
+              role="tab"
+              aria-selected="tipo() === 'fiado'"
+              [class]="tipo() === 'fiado'
+                ? 'bg-mamey-600 text-white shadow-sm'
+                : 'text-stone-600 hover:bg-stone-200/60'"
+              class="h-11 rounded-xl text-sm font-bold transition"
+            >
+              Fiado
             </button>
           </div>
-        } @empty {
-          <p class="py-6 text-center text-sm text-slate-400">El carrito está vacío. Toca un producto.</p>
-        }
-      </div>
 
-      <div class="mt-4 space-y-3 border-t border-slate-100 pt-4">
-        <div class="flex items-center justify-between text-sm text-slate-600">
-          <span>Subtotal</span>
-          <span>${{ subtotal() | number: '1.2-2' }}</span>
-        </div>
-        <div class="flex items-center justify-between gap-3 text-sm text-slate-600">
-          <span>Descuento ($)</span>
-          <input
-            type="number"
-            [ngModel]="descuento()"
-            (ngModelChange)="descuento.set($event || 0)"
-            name="descuento"
-            min="0"
-            step="0.01"
-            class="w-24 rounded-lg border border-slate-300 px-2 py-1 text-right focus:border-emerald-500 focus:outline-none"
-          />
-        </div>
+          @if (tipo() === 'fiado') {
+            <div class="space-y-2">
+              <label class="label-mini" for="clienteId">Cliente que se lleva al fiado</label>
+              <select
+                id="clienteId"
+                [ngModel]="clienteId()"
+                (ngModelChange)="clienteId.set($event)"
+                name="cliente"
+                class="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm focus:border-timon-600 focus:outline-none"
+              >
+                <option [ngValue]="null">Selecciona el cliente…</option>
+                @for (c of clientes(); track c.id) {
+                  <option [ngValue]="c.id">{{ c.nombre }}</option>
+                }
+              </select>
+              <div class="flex gap-2">
+                <input
+                  type="text"
+                  [ngModel]="nuevoCliente()"
+                  (ngModelChange)="nuevoCliente.set($event)"
+                  name="nuevoCliente"
+                  placeholder="Cliente nuevo…"
+                  aria-label="Nombre del cliente nuevo"
+                  class="h-12 w-full rounded-xl border border-stone-300 px-3 text-sm focus:border-timon-600 focus:outline-none"
+                />
+                <button
+                  (click)="crearClienteRapido()"
+                  class="shrink-0 rounded-xl bg-timon-700 px-4 text-sm font-semibold text-white transition hover:bg-timon-800"
+                >
+                  Agregar
+                </button>
+              </div>
+            </div>
+          }
 
-        @if (tipo() === 'contado') {
-          <div class="flex items-center justify-between gap-3 text-sm text-slate-600">
-            <span>Cliente paga ($)</span>
-            <input
-              type="number"
-              [ngModel]="pagoCon()"
-              (ngModelChange)="pagoCon.set($event)"
-              name="pagoCon"
-              min="0"
-              step="0.01"
-              placeholder="0"
-              class="w-24 rounded-lg border border-slate-300 px-2 py-1 text-right focus:border-emerald-500 focus:outline-none"
-            />
+          <div class="max-h-56 space-y-2 overflow-y-auto" aria-label="Productos en el ticket">
+            @for (linea of carrito(); track linea.producto.id) {
+              <div class="flex items-center gap-2 rounded-xl bg-stone-50 px-2.5 py-2 ring-1 ring-stone-100">
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-stone-900">{{ linea.producto.nombre }}</p>
+                  <p class="text-xs text-stone-500">
+                    ${{ linea.producto.precio_venta | number: '1.2-2' }} × {{ linea.cantidad }}
+                  </p>
+                </div>
+                <span class="text-sm font-bold text-timon-900">
+                  ${{ (linea.cantidad * linea.producto.precio_venta) | number: '1.2-2' }}
+                </span>
+                <button
+                  (click)="bajar(linea)"
+                  aria-label="Quitar cantidad de {{ linea.producto.nombre }}"
+                  class="h-11 w-11 shrink-0 rounded-xl bg-stone-200 text-lg font-bold text-stone-700 transition hover:bg-stone-300"
+                >
+                  −
+                </button>
+                <span class="w-7 text-center text-sm font-bold text-stone-900" aria-live="polite">{{ linea.cantidad }}</span>
+                <button
+                  (click)="subir(linea)"
+                  aria-label="Añadir cantidad a {{ linea.producto.nombre }}"
+                  class="h-11 w-11 shrink-0 rounded-xl bg-timon-600 text-lg font-bold text-white transition hover:bg-timon-700"
+                >
+                  +
+                </button>
+                <button
+                  (click)="quitar(linea)"
+                  aria-label="Quitar {{ linea.producto.nombre }} del ticket"
+                  class="shrink-0 rounded-xl p-2.5 text-red-600 transition hover:bg-red-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            } @empty {
+              <p class="py-8 text-center text-sm text-stone-400">El ticket está vacío. Toca un producto.</p>
+            }
           </div>
-          <div class="flex items-center justify-between text-sm">
-            <span class="text-slate-600">Cambio</span>
-            <span class="font-semibold text-emerald-600">${{ cambio() | number: '1.2-2' }}</span>
+
+          <div class="mt-4 space-y-3 border-t border-stone-200 pt-4">
+            <div class="flex items-center justify-between text-sm text-stone-600">
+              <span>Subtotal</span>
+              <span class="font-semibold">${{ subtotal() | number: '1.2-2' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-3 text-sm text-stone-600">
+              <label class="flex shrink-0 items-center gap-1.5" for="descuento">Descuento ($)</label>
+              <input
+                id="descuento"
+                type="number"
+                [ngModel]="descuento()"
+                (ngModelChange)="descuento.set($event || 0)"
+                name="descuento"
+                min="0"
+                step="0.01"
+                class="h-11 w-28 rounded-xl border border-stone-300 px-3 text-right text-sm focus:border-timon-600 focus:outline-none"
+              />
+            </div>
+
+            @if (tipo() === 'contado') {
+              <div class="space-y-2 rounded-2xl bg-timon-50 p-3 ring-1 ring-timon-100">
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    (click)="exacto()"
+                    aria-pressed="pagoCon() != null && pagoCon() === total()"
+                    [class]="pagoCon() != null && pagoCon() === total()
+                      ? 'bg-timon-600 text-white ring-2 ring-timon-600 ring-offset-1'
+                      : 'bg-white text-timon-800 ring-1 ring-timon-200 hover:bg-timon-100'"
+                    class="h-11 rounded-xl px-3.5 text-sm font-bold transition"
+                  >
+                    Exacto
+                  </button>
+                  @for (b of billetes; track b) {
+                    <button
+                      (click)="ponerBillete(b)"
+                      [class]="pagoCon() === b
+                        ? 'bg-timon-600 text-white ring-2 ring-timon-600 ring-offset-1'
+                        : 'bg-white text-timon-800 ring-1 ring-timon-200 hover:bg-timon-100'"
+                      class="h-11 rounded-xl px-3.5 text-sm font-bold transition"
+                    >
+                      ${{ b | number }}
+                    </button>
+                  }
+                </div>
+                <div class="flex items-center justify-between gap-3 text-sm">
+                  <label class="flex shrink-0 items-center gap-1.5 text-timon-900" for="pagoCon">Cliente paga ($)</label>
+                  <input
+                    id="pagoCon"
+                    type="number"
+                    [ngModel]="pagoCon()"
+                    (ngModelChange)="pagoCon.set($event)"
+                    name="pagoCon"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    class="h-11 w-28 rounded-xl border border-timon-200 bg-white px-3 text-right text-sm focus:border-timon-600 focus:outline-none"
+                  />
+                </div>
+                @if (pagoCon() == null) {
+                  <p class="text-xs font-medium text-timon-800">Indica con cuánto paga o toca Exacto.</p>
+                } @else if (faltante() > 0) {
+                  <p class="text-sm font-semibold text-red-600" aria-live="polite">Faltan ${{ faltante() | number: '1.2-2' }}</p>
+                } @else {
+                  <p class="text-sm font-semibold text-emerald-700" aria-live="polite">
+                    @if (cambio() > 0) {
+                      Cambio ${{ cambio() | number: '1.2-2' }}
+                    } @else {
+                      Pago exacto
+                    }
+                  </p>
+                }
+              </div>
+            } @else {
+              <p class="rounded-xl bg-mamey-50 px-3 py-2 text-xs font-medium text-mamey-800 ring-1 ring-mamey-100">
+                Se apunta a la libreta del cliente y se cobra después.
+              </p>
+            }
+
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold uppercase tracking-wide text-stone-500">Total</span>
+              <span class="text-2xl font-black tracking-tight text-timon-900">${{ total() | number: '1.2-2' }}</span>
+            </div>
+
+            @if (error()) {
+              <p role="alert" aria-live="polite" class="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">{{ error() }}</p>
+            }
+
+            <button
+              (click)="cobrar()"
+              [disabled]="!cobrable()"
+              class="h-14 w-full rounded-2xl bg-guineo-400 text-lg font-extrabold tracking-tight text-timon-950 shadow-md shadow-guineo-500/30 transition hover:bg-guineo-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ cobrando() ? 'Cobrando…' : carrito().length > 0 ? `Cobrar (${carrito().length})` : 'Cobrar' }}
+            </button>
           </div>
-        }
-
-        <div class="flex items-center justify-between">
-          <span class="font-semibold">TOTAL</span>
-          <span class="text-2xl font-bold text-slate-900">${{ total() | number: '1.2-2' }}</span>
         </div>
-
-        <button
-          (click)="cobrar()"
-          [disabled]="cobrando() || carrito().length === 0 || sinCaja()"
-          class="w-full rounded-xl bg-emerald-600 py-3 text-base font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50"
-        >
-          {{ cobrando() ? 'Cobrando…' : carrito().length > 0 ? `Cobrar (${carrito().length})` : 'Cobrar' }}
-        </button>
       </div>
+    </aside>
+  </div>
+
+  <div class="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-timon-950 px-4 py-2.5 text-white shadow-2xl shadow-timon-950/40 lg:hidden">
+    <div class="mx-auto flex max-w-3xl items-center gap-3">
+      <button
+        (click)="ticketAbierto.set(!ticketAbierto())"
+        aria-label="Mostrar u ocultar el ticket"
+        aria-expanded="ticketAbierto()"
+        class="flex h-12 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-timon-100 transition hover:bg-white/10"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75" />
+        </svg>
+        Ticket · {{ carrito().length }}
+      </button>
+      <span class="flex-1 text-right text-2xl font-black tracking-tight text-guineo-400">
+        ${{ total() | number: '1.2-2' }}
+      </span>
+      <button
+        (click)="cobrar()"
+        [disabled]="!cobrable()"
+        class="h-12 shrink-0 rounded-xl bg-guineo-400 px-5 text-base font-extrabold text-timon-950 transition hover:bg-guineo-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {{ cobrando() ? '…' : 'Cobrar' }}
+      </button>
     </div>
-  </aside>
+  </div>
 </div>
 
 @if (recibo(); as venta) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div class="w-full max-w-sm rounded-3xl border border-stone-200/60 bg-white p-6 shadow-lift">
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-label="Recibo de venta"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-timon-950/60 p-4"
+    (click)="cerrarRecibo()"
+  >
+    <div class="w-full max-w-sm rounded-3xl border border-stone-200/60 bg-white p-6 shadow-lift" (click)="$event.stopPropagation()">
       <div class="text-center">
-        <p class="text-xl font-bold text-emerald-600">ColmadoX</p>
-        <p class="text-sm text-slate-500">Recibo #{{ recibo()!.venta.numero }}</p>
-        <p class="text-xs text-slate-400">{{ recibo()!.venta.tipo === 'fiado' ? 'A fiado' : 'Contado' }}</p>
+        <p class="text-2xl font-black tracking-tight text-timon-800">ColmadoX</p>
+        <p class="text-sm font-medium text-stone-500">Recibo #{{ recibo()!.venta.numero }}</p>
+        <span class="mt-1 inline-block rounded-full bg-stone-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-stone-600">
+          {{ recibo()!.venta.tipo === 'fiado' ? 'A fiado' : 'Contado' }}
+        </span>
       </div>
-      <div class="my-4 space-y-1 border-t border-dashed border-slate-200 pt-4 text-sm">
+      <div class="my-4 space-y-1.5 border-t border-dashed border-stone-300 pt-4 text-sm" id="lineas-recibo">
         @for (linea of recibo()?.lineas; track linea.producto.id) {
-          <div class="flex justify-between">
-            <span class="text-slate-600">{{ linea.cantidad }} × {{ linea.producto.nombre }}</span>
-            <span>${{ (linea.cantidad * linea.producto.precio_venta) | number: '1.2-2' }}</span>
+          <div class="flex justify-between gap-3">
+            <span class="text-stone-700">{{ linea.cantidad }} × {{ linea.producto.nombre }}</span>
+            <span class="font-semibold text-timon-900">${{ (linea.cantidad * linea.producto.precio_venta) | number: '1.2-2' }}</span>
           </div>
         }
       </div>
-      <div class="space-y-1 border-t border-dashed border-slate-200 pt-3 text-sm">
+      <div class="space-y-1.5 border-t border-dashed border-stone-300 pt-3 text-sm">
         @if (recibo()!.venta.descuento > 0) {
-          <div class="flex justify-between text-slate-600">
+          <div class="flex justify-between text-stone-600">
             <span>Descuento</span>
             <span>− ${{ recibo()!.venta.descuento | number: '1.2-2' }}</span>
           </div>
         }
-        <div class="flex justify-between font-bold">
+        <div class="flex justify-between font-extrabold text-timon-900">
           <span>Total</span>
           <span>${{ recibo()!.venta.total | number: '1.2-2' }}</span>
         </div>
         @if (recibo()!.venta.tipo === 'contado') {
-          <div class="flex justify-between text-slate-600">
+          <div class="flex justify-between text-stone-600">
             <span>Paga con</span>
             <span>${{ recibo()!.venta.pago_con | number: '1.2-2' }}</span>
           </div>
-          <div class="flex justify-between text-emerald-600">
+          <div class="flex justify-between font-semibold text-emerald-700">
             <span>Cambio</span>
             <span>${{ recibo()!.venta.cambio | number: '1.2-2' }}</span>
           </div>
@@ -275,7 +386,7 @@
       </div>
       <button
         (click)="cerrarRecibo()"
-        class="mt-5 w-full rounded-xl bg-emerald-600 py-2.5 font-bold text-white transition hover:bg-emerald-700"
+        class="mt-5 h-12 w-full rounded-2xl bg-guineo-400 text-base font-extrabold text-timon-950 transition hover:bg-guineo-300"
       >
         Nueva venta
       </button>

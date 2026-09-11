@@ -1,15 +1,15 @@
 <div class="flex min-h-screen">
   <div
-    [style.background-image]="'radial-gradient(100% 60% at 90% 0%, rgba(79,168,132,0.25), rgba(10,36,25,0) 60%), radial-gradient(70% 40% at 0% 100%, rgba(224,120,47,0.1), rgba(10,36,25,0) 50%), linear-gradient(160deg, #11392d 0%, #0a2419 55%, #05110c 100%)'"
+    [style.background-image]="'radial-gradient(100% 60% at 90% 0%, rgba(85,170,208,0.25), rgba(11,35,50,0) 60%), radial-gradient(70% 40% at 0% 100%, rgba(242,190,14,0.12), rgba(11,35,50,0) 50%), linear-gradient(160deg, #15587a 0%, #0b2332 60%, #06131e 100%)'"
     class="relative hidden w-1/2 flex-col justify-between overflow-hidden p-12 text-stone-100 lg:flex"
   >
     <div class="flex items-center gap-3">
-      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-700 font-display text-xl font-bold text-white shadow-lg shadow-black/30 ring-1 ring-white/20">
+      <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-guineo-400 to-guineo-600 font-display text-xl font-extrabold text-timon-950 shadow-lg shadow-black/40 ring-1 ring-white/30">
         C
       </div>
       <div>
         <p class="font-display text-xl font-semibold leading-none tracking-tight">
-          Colmado<span class="text-amber-400">X</span>
+          Colmado<span class="text-guineo-400">X</span>
         </p>
         <p class="mt-1 text-xs text-stone-400">Sistema de gestión de colmado</p>
       </div>
@@ -18,11 +18,11 @@
     <div class="space-y-7">
       <h1 class="font-display text-4xl font-semibold leading-[1.12] tracking-tight">
         Controla tus ventas,<br />
-        inventario y <span class="text-amber-400">fiados</span> en un solo lugar.
+        inventario y <span class="text-guineo-400">fiados</span> en un solo lugar.
       </h1>
       <ul class="space-y-3.5 text-sm text-stone-300">
         <li class="flex items-center gap-3">
-          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/20">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-timon-400/15 text-timon-300 ring-1 ring-timon-400/20">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
@@ -30,7 +30,7 @@
           Punto de venta rápido de contado y fiado
         </li>
         <li class="flex items-center gap-3">
-          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/20">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-timon-400/15 text-timon-300 ring-1 ring-timon-400/20">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
@@ -38,7 +38,7 @@
           Caja diaria con arqueo y gastos
         </li>
         <li class="flex items-center gap-3">
-          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300 ring-1 ring-emerald-400/20">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-timon-400/15 text-timon-300 ring-1 ring-timon-400/20">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="h-3.5 w-3.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
@@ -60,12 +60,12 @@
     >
       <div class="text-center lg:hidden">
         <div
-          class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-700 font-display text-2xl font-bold text-white shadow-lg ring-1 ring-white/20"
+          class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-guineo-400 to-guineo-600 font-display text-2xl font-extrabold text-timon-950 shadow-lg ring-1 ring-white/30"
         >
           C
         </div>
         <h1 class="mt-3 font-display text-2xl font-semibold tracking-tight">
-          Colmado<span class="text-emerald-700">X</span>
+          Colmado<span class="text-timon-800">X</span>
         </h1>
         <p class="mt-1 text-sm text-stone-500">Inicia sesión para vender</p>
       </div>
@@ -115,7 +115,7 @@
       <button
         type="submit"
         [disabled]="cargando()"
-        class="w-full rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-700 py-3 font-display text-sm font-semibold text-white shadow-lg shadow-emerald-900/25 transition hover:from-emerald-900 hover:to-emerald-800 hover:shadow-emerald-900/30 active:scale-[0.99] disabled:opacity-50 disabled:hover:from-emerald-800 disabled:hover:to-emerald-700"
+        class="h-12 w-full rounded-xl bg-guineo-400 py-3 text-sm font-extrabold text-timon-950 shadow-lg shadow-guineo-500/30 transition hover:bg-guineo-300 active:scale-[0.99] disabled:opacity-50 disabled:hover:bg-guineo-400"
       >
         {{ cargando() ? 'Entrando…' : 'Entrar' }}
       </button>

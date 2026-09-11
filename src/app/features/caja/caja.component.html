@@ -47,19 +47,20 @@
         <p class="mb-4 text-slate-600">
           {{ r?.caja?.estado === 'cerrada' ? 'Abre una nueva caja cuando quieras seguir vendiendo:' : 'Aún no has abierto la caja de hoy. Indica el fondo inicial:' }}
         </p>
-        <div class="flex max-w-xs items-center gap-2">
-          <span class="text-lg font-semibold text-slate-700">$</span>
+<div class="flex max-w-xs items-center gap-2">
+          <span class="text-lg font-semibold text-timon-900">$</span>
           <input
             type="number"
             [(ngModel)]="fondo"
             name="fondo"
             min="0"
-            class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+            aria-label="Fondo inicial"
+            class="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-right text-sm focus:border-timon-600 focus:outline-none"
           />
           <button
             (click)="abrir()"
             [disabled]="ocupado()"
-            class="shrink-0 rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+            class="shrink-0 rounded-xl bg-guineo-400 px-6 py-2.5 text-sm font-extrabold text-timon-950 transition hover:bg-guineo-300 disabled:opacity-50"
           >
             Abrir caja
           </button>
@@ -85,9 +86,11 @@
           <p class="text-xs uppercase text-slate-500">Gastos de esta caja</p>
           <p class="text-lg font-bold text-red-600">${{ r!.gastos | number: '1.2-2' }}</p>
         </div>
-        <div class="card p-4">
-          <p class="text-xs uppercase text-slate-500">Debe haber en físico</p>
-          <p class="text-lg font-bold">${{ r!.esperado | number: '1.2-2' }}</p>
+<div class="card relative overflow-hidden p-4 ring-1 ring-timon-100">
+          <span class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-guineo-400 to-timon-400"></span>
+          <p class="label-mini text-timon-700">Debe haber en físico</p>
+          <p class="mt-1.5 text-2xl font-black tracking-tight text-timon-900">${{ r!.esperado | number: '1.2-2' }}</p>
+          <p class="mt-1 text-xs text-timon-800">La cuenta de hoy, contada en tu bolsillo</p>
         </div>
         @if (auth.isJefe()) {
           <div class="card p-4">
@@ -106,7 +109,7 @@
               [(ngModel)]="gastoDesc"
               name="gastoDesc"
               placeholder="Descripción (ej. pasaje, agua)"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-timon-600 focus:outline-none"
             />
             <div class="flex gap-2">
               <span class="flex items-center font-semibold text-slate-700">$</span>
@@ -116,12 +119,12 @@
                 name="gastoMonto"
                 min="0"
                 placeholder="0.00"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-timon-600 focus:outline-none"
               />
               <button
                 (click)="agregarGasto()"
                 [disabled]="ocupado()"
-                class="shrink-0 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
+                class="shrink-0 rounded-xl bg-mamey-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-mamey-700 disabled:opacity-50"
               >
                 Agregar
               </button>
@@ -185,7 +188,7 @@
           <button
             (click)="abrirModalCerrar()"
             [disabled]="ocupado()"
-            class="w-full rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+            class="w-full rounded-xl bg-timon-700 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-timon-800 disabled:opacity-50"
           >
             Cerrar caja (arqueo)
           </button>
@@ -291,8 +294,14 @@
 
   }
 
-  @if (ventaAnular(); as venta) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="cerrarModalAnular()">
+@if (ventaAnular(); as venta) {
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Anular venta"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-timon-950/60 p-4"
+      (click)="cerrarModalAnular()"
+    >
       <div class="w-full max-w-sm rounded-3xl border border-stone-200/60 bg-white p-6 shadow-lift" (click)="$event.stopPropagation()">
         <h2 class="text-xl font-bold text-red-600">Anular venta #{{ venta.numero }}</h2>
         <p class="mt-1 text-sm text-slate-600">
@@ -327,9 +336,12 @@
     </div>
   }
 
-  @if (modalCerrar()) {
+@if (modalCerrar()) {
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Cerrar caja"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-timon-950/60 p-4"
       (click)="cerrarModal()"
     >
       <div class="w-full max-w-md rounded-3xl border border-stone-200/60 bg-white p-6 shadow-lift" (click)="$event.stopPropagation()">
@@ -381,7 +393,7 @@
               name="fisico"
               min="0"
               placeholder="0.00"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-emerald-500 focus:outline-none"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-timon-600 focus:outline-none"
             />
         </div>
         </div>
@@ -397,7 +409,7 @@
           <button
             (click)="confirmarCierre()"
             [disabled]="ocupado()"
-            class="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+            class="flex-1 rounded-xl bg-timon-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-timon-800 disabled:opacity-50"
           >
             {{ ocupado() ? 'Cerrando…' : 'Confirmar cierre' }}
           </button>

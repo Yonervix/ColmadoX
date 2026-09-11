@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, HostListener, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EncabezadoPaginaComponent } from '../../componentes/encabezado-pagina/encabezado-pagina.component';
@@ -179,5 +179,12 @@ export class CajaComponent implements OnInit {
     if (diferencia === 0) return 'Caja cuadrada';
     if (diferencia > 0) return `Sobran $${diferencia.toFixed(2)}`;
     return `Faltan $${Math.abs(diferencia).toFixed(2)}`;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  protected cerrarConEscape(event: KeyboardEvent) {
+    if (event.key !== 'Escape') return;
+    if (this.ventaAnular()) this.cerrarModalAnular();
+    if (this.modalCerrar()) this.cerrarModal();
   }
 }

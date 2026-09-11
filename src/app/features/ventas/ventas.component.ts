@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, HostListener, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
@@ -40,6 +40,9 @@ export class VentasComponent implements OnInit {
   protected readonly error = signal('');
   protected readonly sinCaja = signal(false);
   protected readonly recibo = signal<{ venta: VentaRegistrada; lineas: Linea[] } | null>(null);
+  protected readonly ticketAbierto = signal(true);
+  private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
+  protected readonly billetes = [100, 200, 500, 1000];
 
   protected readonly productosFiltrados = computed(() => {
     const q = this.buscando().toLowerCase().trim();
@@ -73,8 +76,57 @@ export class VentasComponent implements OnInit {
     return Math.max(pagado - this.total(), 0);
   });
 
+  protected readonly faltante = computed(() => {
+    const pagado = this.pagoCon();
+    if (this.tipo() !== 'contado' || pagado == null) return 0;
+    return Math.max(this.total() - pagado, 0);
+  });
+
+  protected readonly cobrable = computed(
+    () =>
+      this.carrito().length > 0 &&
+      !this.sinCaja() &&
+      !this.cobrando() &&
+      (this.tipo() === 'fiado'
+        ? !!this.clienteId()
+        : this.pagoCon() != null && this.faltante() === 0),
+  );
+
   async ngOnInit() {
     await this.cargarTodo();
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  protected atajoTeclado(event: KeyboardEvent) {
+    if (this.recibo()) {
+      if (event.key === 'Escape') this.cerrarRecibo();
+      return;
+    }
+    const objetivo = event.target as HTMLElement | null;
+    const tecleando =
+      objetivo &&
+      (objetivo.tagName === 'INPUT' || objetivo.tagName === 'SELECT' || objetivo.tagName === 'TEXTAREA');
+    if (event.key === '/' && !tecleando) {
+      event.preventDefault();
+      this.buscador()?.nativeElement.focus();
+    }
+  }
+
+  protected onBuscarKeydown(event: Event) {
+    const teclado = event as KeyboardEvent;
+    if (teclado.key !== 'Enter') return;
+    const primero = this.productosFiltrados()[0];
+    if (primero) this.agregar(primero);
+  }
+
+  protected exacto() {
+    this.pagoCon.set(this.total());
+    this.error.set('');
+  }
+
+  protected ponerBillete(monto: number) {
+    this.pagoCon.set(monto);
+    this.error.set('');
   }
 
   private async cargarTodo() {
@@ -215,6 +267,14 @@ export class VentasComponent implements OnInit {
 
   protected etiquetaTipo(t: TipoProducto): string {
     return { unidad: 'Suelto', paquete: 'Paquete', caja: 'Caja' }[t] ?? '';
+  }
+
+  protected pillTipo(t: TipoProducto): string {
+    return {
+      unidad: 'rounded-full bg-timon-50 px-2 py-0.5 text-[10px] font-bold text-timon-700 ring-1 ring-timon-100',
+      paquete: 'rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-100',
+      caja: 'rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-bold text-stone-600 ring-1 ring-stone-200',
+    }[t];
   }
 
   protected esSinConteo(p: ProductoVenta): boolean {
