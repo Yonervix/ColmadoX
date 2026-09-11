@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { TemaService } from '../core/services/tema.service';
 import { LayoutIconComponent } from './layout-icon.component';
 
 interface NavItem {
@@ -24,9 +25,15 @@ interface GrupoNav {
 export class LayoutComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private tema = inject(TemaService);
 
   protected readonly perfil = this.auth.perfil;
   protected readonly menuAbierto = signal(false);
+  protected readonly oscuro = this.tema.oscuro;
+
+  protected alternarTema() {
+    this.tema.alternar();
+  }
 
   protected readonly grupos = computed<GrupoNav[]>(() => {
     const esJefe = !!this.auth.perfil()?.rol && this.auth.isJefe();
