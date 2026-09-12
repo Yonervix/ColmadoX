@@ -1,10 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { AuthService } from '../../core/services/auth.service';
 import type { Categoria, Producto } from './inventario.types';
 
 @Injectable({ providedIn: 'root' })
 export class InventarioService {
   private supabase = inject(SupabaseService);
+  private auth = inject(AuthService);
   private get db() {
     return this.supabase.client;
   }
@@ -60,7 +62,8 @@ export class InventarioService {
 
   async subirFoto(file: File, productoId: string): Promise<void> {
     const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase();
-    const path = `${productoId}/foto.${ext}`;
+    const colmadoId = this.auth.perfil()?.colmado_id ?? 'm';
+    const path = `${colmadoId}/${productoId}/foto.${ext}`;
     const { error } = await this.db.storage
       .from('productos')
       .upload(path, file, { upsert: true });

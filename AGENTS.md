@@ -14,10 +14,19 @@ Angular 22 (standalone components, signals, `@`-control-flow templates) + Supaba
 - `create or replace view` cannot add columns mid-select or reorder them (error `42P16`) — new columns must be appended at the END.
 
 ## Architecture
-- Features in `src/app/features/{caja, compras, fiado, gastos, inicio, info, inventario, mermas, reportes, ventas}` as `{name}.component.{ts,html}` + `{name}.service.ts`. Shared UI in `src/app/componentes/` (Spanish kebab names) and `src/app/layout/`.
+- Features in `src/app/features/{caja, compras, equipo, fiado, gastos, inicio, info, inventario, mermas, onboarding, reportes, ventas}` as `{name}.component.{ts,html}` + `{name}.service.ts`. Shared UI in `src/app/componentes/` (Spanish kebab names) and `src/app/layout/`.
 - All business mutations go through **`security definer` RPC functions** (e.g. `registrar_venta`, `registrar_compra`, `abrir_caja`, `cerrar_conteo`), always declared `set search_path = public`. Client calls `supabase.rpc('fn_name', { p_... })`. Never insert/update financial rows directly from the client — extend the RPC instead.
 - Roles: `profiles.rol` (`'jefe' | 'empleado'`), auto-created by trigger `handle_new_user` from `raw_user_meta_data.rol`. `is_jefe()` gates jefe-only features (compras, gastos, mermas, balance/ganancia). Employee flows must keep working — previous breakage happened because caja funcions checked `is_jefe()` and now only check `auth.uid()`.
 - **Business "today" = `public.fecha_local()`** = `now() at time zone 'America/Santo_Domingo'` (fixed -04:00, no DST). Never use browser/device timezone or UTC for "today" logic; frontend uses -04:00 helpers. No sale without an open caja (`abrir_caja` same day); `ventas.numero` is assigned by a before-insert trigger.
+
+## Multi-tenancy (multi-colmado)
+- Every account belongs to a `public.colmados` row via `profiles.colmado_id`. New users without a colmado land on `/onboarding`: jefe creates one (`crear_colmado`), cajeros join by 6-char code (`unirse_colmado`). The jefe manages the team under `/equipo` (`lista_equipo`, `asignar_equipo`, creates cajero accounts via `auth.signUp({ options: { data: { nombre, rol: 'empleado' } } })`).
+- Helpers `mi_colmado()` (current user's colmado id) and `pertenece(colmado_id)` gate every RLS policy: `using (public.pertenece(colmado_id))` (+ `is_jefe()` where jefe-only). Do NOT use blanket `using (true)`.
+- Every business table carries `colmado_id uuid default public.mi_colmado()` (FK to colmados). Column defaults + RLS `check` mean direct client inserts get scoped automatically.
+- All `security definer` RPCs fetch `public.mi_colmado()` and scope their queries/inserts by `colmado_id` — column NEVER optional in them. New RPCs must verify the target row belongs (`and colmado_id = v_colmado`).
+- `ventas.numero` is sequential per colmado (trigger `idx_ventas_numero` filters `where colmado_id = new.colmado_id`). `caja` is unique per `(colmado_id, fecha)` (one open caja per colmado per day).
+- Photo paths in `inventario.service.subirFoto` are prefixed `${colmado_id}/${productoId}/...`.
+- Migration block for this feature is at the END of `schema.sql` (after `registrar_compra`) and must be run as one paste in the SQL Editor. It backfills existing data into one "Mi Colmado" row.
 
 ## Product stock semantics — get this right
 `productos.stock` is one integer in *sell units*. `tipo` enum: `unidad | paquete | caja`. Column `unidades_por_paquete numeric`:

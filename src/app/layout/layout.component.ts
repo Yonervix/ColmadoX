@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { ColmadoService } from '../core/services/colmado.service';
 import { TemaService } from '../core/services/tema.service';
 import { LayoutIconComponent } from './layout-icon.component';
 
@@ -26,10 +27,26 @@ export class LayoutComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
   private tema = inject(TemaService);
+  private colmados = inject(ColmadoService);
 
   protected readonly perfil = this.auth.perfil;
+  protected readonly colmado = this.colmados.info;
   protected readonly menuAbierto = signal(false);
   protected readonly oscuro = this.tema.oscuro;
+  protected readonly codigoCopiado = signal(false);
+
+  constructor() {
+    void this.colmados.cargar();
+  }
+
+  protected copiarCodigo() {
+    const codigo = this.colmados.info()?.codigo;
+    if (!codigo) return;
+    void navigator.clipboard.writeText(codigo).then(() => {
+      this.codigoCopiado.set(true);
+      setTimeout(() => this.codigoCopiado.set(false), 1500);
+    });
+  }
 
   protected alternarTema() {
     this.tema.alternar();
@@ -75,6 +92,7 @@ const grupos: GrupoNav[] = [
       { path: '/mermas', label: 'Mermas', icon: 'mermas', jefe: true },
       { path: '/gastos', label: 'Gastos', icon: 'gastos', jefe: true },
       { path: '/reportes', label: 'Reportes', icon: 'reportes', jefe: true },
+      { path: '/equipo', label: 'Equipo', icon: 'equipo', jefe: true },
     ],
   },
   {

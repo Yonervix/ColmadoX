@@ -1,11 +1,17 @@
 import { Routes } from '@angular/router';
-import { authGuard, jefeGuard, sinSesionGuard } from './core/guards/auth.guard';
+import { authGuard, jefeGuard, sinColmadoGuard, sinSesionGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
     canActivate: [sinSesionGuard],
     loadComponent: () => import('./login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'onboarding',
+    canActivate: [sinColmadoGuard],
+    loadComponent: () =>
+      import('./features/onboarding/onboarding.component').then((m) => m.OnboardingComponent),
   },
   {
     path: '',
@@ -36,6 +42,11 @@ export const routes: Routes = [
         path: 'mermas',
         canActivate: [jefeGuard],
         loadComponent: () => import('./features/mermas/mermas.component').then((m) => m.MermasComponent),
+      },
+      {
+        path: 'equipo',
+        canActivate: [jefeGuard],
+        loadComponent: () => import('./features/equipo/equipo.component').then((m) => m.EquipoComponent),
       },
       {
         path: 'caja',

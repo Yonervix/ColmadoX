@@ -8,6 +8,7 @@ export interface Perfil {
   id: string;
   nombre: string;
   rol: Rol;
+  colmado_id?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,9 +20,16 @@ export class AuthService {
   readonly listo: Promise<void>;
 
   readonly isJefe = computed(() => this.perfil()?.rol === 'jefe');
+  readonly tieneColmado = computed(() => !!this.perfil()?.colmado_id);
+
+  private esperaPerfil: Promise<void> = Promise.resolve();
 
   constructor() {
     this.listo = this.cargarSesion();
+  }
+
+  async esperarPerfil() {
+    await this.esperaPerfil;
   }
 
   private async cargarSesion() {
@@ -41,13 +49,23 @@ export class AuthService {
   }
 
   private async cargarPerfil(uid: string) {
-    const { data, error } = await this.supabase.client
-      .from('profiles')
-      .select('*')
-      .eq('id', uid)
-      .single();
-    if (!error && data) {
-      this.perfil.set(data as Perfil);
+    this.esperaPerfil = (async () => {
+      const { data, error } = await this.supabase.client
+        .from('profiles')
+        .select('*')
+        .eq('id', uid)
+        .single();
+      if (!error && data) {
+        this.perfil.set(data as Perfil);
+      }
+    })();
+    await this.esperaPerfil;
+  }
+
+  async recargarPerfil() {
+    const uid = this.session()?.user.id;
+    if (uid) {
+      await this.cargarPerfil(uid);
     }
   }
 

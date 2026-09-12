@@ -1,0 +1,111 @@
+<div
+  [style.background-image]="'radial-gradient(100% 60% at 90% 0%, rgba(85,170,208,0.25), rgba(11,35,50,0) 60%), radial-gradient(70% 40% at 0% 100%, rgba(242,190,14,0.12), rgba(11,35,50,0) 50%), linear-gradient(160deg, #15587a 0%, #0b2332 60%, #06131e 100%)'"
+  class="flex min-h-screen items-center justify-center p-6"
+>
+  <div class="w-full max-w-md">
+    <div class="mb-8 text-center text-stone-100">
+      <div
+        class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-guineo-400 to-guineo-600 font-display text-2xl font-extrabold text-timon-950 shadow-lg shadow-black/40 ring-1 ring-white/30"
+      >
+        C
+      </div>
+      <h1 class="mt-4 font-display text-2xl font-semibold tracking-tight">
+        Colmado<span class="text-guineo-400">X</span>
+      </h1>
+      <p class="mt-1 text-sm text-stone-400">
+        {{ modo() === 'crear' ? 'Crea tu colmado para empezar' : 'Únete a tu colmado con el código' }}
+      </p>
+    </div>
+
+    @if (error()) {
+      <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="mt-0.5 h-4 w-4 shrink-0">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        {{ error() }}
+      </div>
+    }
+
+    <form
+      (ngSubmit)="modo() === 'crear' ? crear() : unirse()"
+      class="space-y-5 rounded-3xl border border-stone-200/70 bg-white/90 p-8 shadow-card backdrop-blur"
+    >
+      @if (modo() === 'crear') {
+        <div>
+          <h2 class="font-display text-lg font-semibold text-stone-900">Crea tu colmado</h2>
+          <p class="mt-1 text-sm text-stone-500">Recibirás un código para invitar a tus cajeros.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-stone-700" for="nombre">Nombre del colmado</label>
+          <input
+            id="nombre"
+            type="text"
+            name="nombre"
+            [(ngModel)]="nombre"
+            required
+            autocomplete="organization"
+            placeholder="Colmado Doña María"
+            class="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm transition placeholder:text-stone-400"
+          />
+        </div>
+        <button
+          type="submit"
+          [disabled]="cargando()"
+          class="h-12 w-full rounded-xl bg-guineo-400 py-3 text-sm font-extrabold text-timon-950 shadow-lg shadow-guineo-500/30 transition hover:bg-guineo-300 active:scale-[0.99] disabled:opacity-50 disabled:hover:bg-guineo-400"
+        >
+          {{ cargando() ? 'Creando…' : 'Crear mi colmado' }}
+        </button>
+      } @else {
+        <div>
+          <h2 class="font-display text-lg font-semibold text-stone-900">Únete con un código</h2>
+          <p class="mt-1 text-sm text-stone-500">Pídele el código de tu colmado al jefe o dueño.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-stone-700" for="codigo">Código del colmado</label>
+          <input
+            id="codigo"
+            type="text"
+            name="codigo"
+            [(ngModel)]="codigo"
+            required
+            autocomplete="off"
+            placeholder="ABC123"
+            maxlength="6"
+            class="mt-1.5 w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-center text-lg font-bold uppercase tracking-[0.35em] transition placeholder:text-stone-400"
+          />
+        </div>
+        <button
+          type="submit"
+          [disabled]="cargando()"
+          class="h-12 w-full rounded-xl bg-guineo-400 py-3 text-sm font-extrabold text-timon-950 shadow-lg shadow-guineo-500/30 transition hover:bg-guineo-300 active:scale-[0.99] disabled:opacity-50 disabled:hover:bg-guineo-400"
+        >
+          {{ cargando() ? 'Entrando…' : 'Unirme' }}
+        </button>
+      }
+    </form>
+
+    @if (modo() === 'crear') {
+      <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-center backdrop-blur">
+        <p class="text-sm text-stone-300">¿Te dieron un código?</p>
+        <button
+          type="button"
+          (click)="cambiarModo('unirse')"
+          class="mt-1 text-sm font-bold text-guineo-300 transition hover:text-guineo-200"
+        >
+          Unirme a otro colmado
+        </button>
+      </div>
+    } @else {
+      <div class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-center backdrop-blur">
+        <p class="text-sm text-stone-300">¿Eres el dueño?</p>
+        <button
+          type="button"
+          (click)="cambiarModo('crear')"
+          class="mt-1 text-sm font-bold text-guineo-300 transition hover:text-guineo-200"
+        >
+          Crear mi colmado
+        </button>
+      </div>
+    }
+  </div>
+</div>
